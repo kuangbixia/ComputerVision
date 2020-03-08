@@ -54,6 +54,9 @@ CTestMFCDlg::CTestMFCDlg(CWnd* pParent /*=nullptr*/)
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	// 初始化变量
 	m_pImgSrc = NULL;
+	m_pImgCpy = NULL;
+	m_nThreadNum = 1;
+	m_pThreadParam = new ThreadParam[MAX_THREAD];
 }
 
 void CTestMFCDlg::DoDataExchange(CDataExchange* pDX)
@@ -63,11 +66,184 @@ void CTestMFCDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PICTURE, mPictureControl);
 }
 
+void CTestMFCDlg::AddNoise()
+{
+	CComboBox* cmb_thread = ((CComboBox*)GetDlgItem(IDC_COMBO_THREAD));
+	int thread = cmb_thread->GetCurSel();
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	// 作用？？？
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 100;
+	startTime = CTime::GetTickCount();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		AddNoise_WIN();
+		break;
+	}
+	case 1: // OpenMP
+	{
+		// ???
+		int subLength = m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() / m_nThreadNum;
+
+		#pragma omp parallel for num_threads(m_nThreadNum)
+		for (int i = 0; i < m_nThreadNum; i++) {
+			m_pThreadParam[i].src = m_pImgSrc;
+			m_pThreadParam[i].startIndex = i * subLength;
+			if (i != m_nThreadNum - 1) {
+				m_pThreadParam[i].endIndex = (i + 1) * subLength - 1;
+			}
+			else {
+				m_pThreadParam[i].endIndex = m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() - 1;
+			}
+			ImageProcess::addNoise(&m_pThreadParam[i]);
+		}
+		break;
+	}
+	case 2: // OpenCL
+	{
+		// TODO
+		break;
+	}
+	}
+}
+
+void CTestMFCDlg::MedianFilter()
+{
+	CComboBox* cmb_thread = ((CComboBox*)GetDlgItem(IDC_COMBO_THREAD));
+	int thread = cmb_thread->GetCurSel();
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	// ？？？why 4？
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 4;
+	startTime = CTime::GetTickCount();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		MedianFilter_WIN();
+		break;
+	}
+	case 1: // OpenMP
+	{
+		int subLength = m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() / m_nThreadNum;
+
+		#pragma omp parallel for num_threads(m_nThreadNum)
+		for (int i = 0; i < m_nThreadNum; ++i)
+		{
+			m_pThreadParam[i].startIndex = i * subLength;
+			m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() - 1;
+			m_pThreadParam[i].maxSpan = MAX_SPAN;
+			m_pThreadParam[i].src = m_pImgSrc;
+			ImageProcess::medianFilter(&m_pThreadParam[i]);
+		}
+		break;
+	}
+	case 2: // OpenCL
+	{
+		break;
+	}
+	}
+
+}
+
+void CTestMFCDlg::AddNoise_WIN() // 跟OpenMP的区别？？
+{
+	int subLength = m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() / m_nThreadNum;
+	for (int i = 0; i < m_nThreadNum; ++i)
+	{
+		m_pThreadParam[i].src = m_pImgSrc;
+		m_pThreadParam[i].startIndex = i * subLength;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
+			(i + 1) * subLength - 1 : m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() - 1;
+		AfxBeginThread((AFX_THREADPROC)&ImageProcess::addNoise, &m_pThreadParam[i]);
+	}
+}
+
+void CTestMFCDlg::MedianFilter_WIN()
+{
+	int subLength = m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() / m_nThreadNum;
+	int h = m_pImgSrc->GetHeight() / m_nThreadNum;
+	int w = m_pImgSrc->GetWidth() / m_nThreadNum;
+	for (int i = 0; i < m_nThreadNum; ++i)
+	{
+		m_pThreadParam[i].startIndex = i * subLength;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
+			(i + 1) * subLength - 1 : m_pImgSrc->GetWidth() * m_pImgSrc->GetHeight() - 1;
+		m_pThreadParam[i].maxSpan = MAX_SPAN;
+		m_pThreadParam[i].src = m_pImgSrc;
+		AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &m_pThreadParam[i]);
+	}
+}
+
+void CTestMFCDlg::ThreadDraw(DrawPara* p)
+{
+}
+
+void CTestMFCDlg::ImageCopy(CImage* pImgSrc, CImage* pImgDrt)
+{
+}
+
+UINT CTestMFCDlg::Update(void* p)
+{
+	while (1)
+	{
+		Sleep(200);
+		CTestMFCDlg* dlg = (CTestMFCDlg*)p;
+		if (dlg->m_pImgSrc != NULL) {
+			int picHeight = dlg->m_pImgSrc->GetHeight();
+			int picWidth = dlg->m_pImgSrc->GetWidth();
+			CRect picCtrlRect;
+			CRect displayRect;
+
+			// CDC————设备上下文对象
+			CDC* pDC = dlg->mPictureControl.GetDC();
+			// SetStretchBltMode函数，设置指定设备环境中的位图拉伸模式
+			SetStretchBltMode(pDC->m_hDC, STRETCH_HALFTONE);
+
+			// 窗口区分为 client 客户区域 和 非客户区
+			dlg->mPictureControl.GetClientRect(&picCtrlRect);
+			if (picHeight <= picCtrlRect.Height() && picWidth <= picCtrlRect.Width()) {
+				displayRect = CRect(picCtrlRect.TopLeft(), CSize(picWidth, picHeight));
+			}
+			else {
+				float xScale = (float)picCtrlRect.Width() / (float)picWidth;
+				float yScale = (float)picCtrlRect.Height() / (float)picHeight;
+				float scale = xScale <= yScale ? xScale : yScale;
+				displayRect = CRect(picCtrlRect.TopLeft(), CSize((int)picWidth * scale, (int)picHeight * scale));
+			}
+			// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
+			dlg->m_pImgSrc->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
+			// CDC消耗很大，要及时释放
+			dlg->ReleaseDC(pDC);
+		}
+	}
+	return 0;
+}
+
+LRESULT CTestMFCDlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	return LRESULT();
+}
+
+LRESULT CTestMFCDlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	return LRESULT();
+}
+
 BEGIN_MESSAGE_MAP(CTestMFCDlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
 	ON_WM_QUERYDRAGICON()
+
+	// 控件处理消息函数
 	ON_BN_CLICKED(IDC_BUTTON_OPEN, &CTestMFCDlg::OnBnClickedButtonOpen)
+	ON_CBN_SELCHANGE(IDC_COMBO_FUNCTION, &CTestMFCDlg::OnCbnSelchangeComboFunction)
+	ON_CBN_SELCHANGE(IDC_COMBO_THREAD, &CTestMFCDlg::OnCbnSelchangeComboThread)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_THREADNUM, &CTestMFCDlg::OnNMCustomdrawSliderThreadnum)
+	ON_BN_CLICKED(IDC_BUTTON_DEAL, &CTestMFCDlg::OnBnClickedButtonDeal)
+
+	// 定义线程通信消息函数
+	ON_MESSAGE(WM_NOISE, &CTestMFCDlg::OnNoiseThreadMsgReceived)
+	ON_MESSAGE(WM_MEDIAN_FILTER, &CTestMFCDlg::OnMedianFilterThreadMsgReceived)
 END_MESSAGE_MAP()
 
 
@@ -103,7 +279,25 @@ BOOL CTestMFCDlg::OnInitDialog()
 	SetIcon(m_hIcon, FALSE);		// 设置小图标
 
 	// TODO: 在此添加额外的初始化代码
+
 	mEditInfo.SetWindowTextW(CString("显示图片路径"));
+
+	CComboBox* cmb_function = (CComboBox*)GetDlgItem(IDC_COMBO_FUNCTION);
+	cmb_function->AddString(_T("椒盐噪声"));
+	cmb_function->AddString(_T("自适应中值滤波"));
+	cmb_function->SetCurSel(0);
+
+	CComboBox* cmb_thread = (CComboBox*)GetDlgItem(IDC_COMBO_THREAD);
+	cmb_thread->InsertString(0, _T("WIN多线程"));
+	cmb_thread->InsertString(1, _T("OpenMP"));
+	cmb_thread->InsertString(2, _T("OpenCL"));
+	cmb_thread->SetCurSel(0);
+
+	CSliderCtrl* slider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER_THREADNUM);
+	slider->SetRange(1, MAX_THREAD, TRUE);
+	slider->SetPos(1);
+
+	AfxBeginThread((AFX_THREADPROC)&CTestMFCDlg::Update, this);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -148,6 +342,7 @@ void CTestMFCDlg::OnPaint()
 	else
 	{
 		CDialogEx::OnPaint();
+		/*
 		if (m_pImgSrc != NULL) {
 			int picHeight = m_pImgSrc->GetHeight();
 			int picWidth = m_pImgSrc->GetWidth();
@@ -157,23 +352,18 @@ void CTestMFCDlg::OnPaint()
 			// CDC————设备上下文对象
 			CDC* pDC = mPictureControl.GetDC();
 			// SetStretchBltMode函数，设置指定设备环境中的位图拉伸模式
-			/* 
-			hDC
-			————对象使用的输出设备上下文
-			HALFTONE/STRETCH_HALFTONE
-			————将源矩形区中的像素映射到目标矩形区的像素块中，
-			覆盖目标像素块的一般颜色与源像素的颜色接近。
-			在设置完HALFTONE拉伸模之后，
-			应用程序必须调用SetBrushOrgEx函数来设置刷子的起始点。
-			如果没有成功，那么会出现刷子没对准的情况。
-			*/
+			
+			//hDC————对象使用的输出设备上下文
+			//HALFTONE/STRETCH_HALFTONE————将源矩形区中的像素映射到目标矩形区的像素块中，
+			//覆盖目标像素块的一般颜色与源像素的颜色接近。
+			//在设置完HALFTONE拉伸模之后，应用程序必须调用SetBrushOrgEx函数来设置刷子的起始点。
+			//如果没有成功，那么会出现刷子没对准的情况。
 			SetStretchBltMode(pDC->m_hDC, STRETCH_HALFTONE);
 
 			// 窗口区分为 client 客户区域 和 非客户区
 			mPictureControl.GetClientRect(&picCtrlRect);
 			if (picHeight <= picCtrlRect.Height() && picWidth <= picCtrlRect.Width()) {
 				displayRect = CRect(picCtrlRect.TopLeft(), CSize(picWidth, picHeight));
-				// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
 			}
 			else {
 				float xScale = (float)picCtrlRect.Width() / (float)picWidth;
@@ -181,10 +371,13 @@ void CTestMFCDlg::OnPaint()
 				float scale = xScale <= yScale ? xScale : yScale;
 				displayRect = CRect(picCtrlRect.TopLeft(), CSize((int)picWidth * scale, (int)picHeight * scale));
 			}
+			// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
 			m_pImgSrc->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
 			// CDC消耗很大，要及时释放
 			ReleaseDC(pDC);
 		}
+		*/
+		
 	}
 }
 
@@ -196,6 +389,7 @@ HCURSOR CTestMFCDlg::OnQueryDragIcon()
 }
 
 
+// 控件处理函数的实现
 
 void CTestMFCDlg::OnBnClickedButtonOpen()
 {
@@ -224,5 +418,50 @@ void CTestMFCDlg::OnBnClickedButtonOpen()
 		m_pImgSrc->Load(strFilePath);
 		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
 		this->Invalidate();
+	}
+}
+
+void CTestMFCDlg::OnCbnSelchangeComboFunction()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+
+void CTestMFCDlg::OnCbnSelchangeComboThread()
+{
+	// TODO: 在此添加控件通知处理程序代码
+}
+
+void CTestMFCDlg::OnNMCustomdrawSliderThreadnum(NMHDR* pNMHDR, LRESULT* pResult)
+{
+	LPNMCUSTOMDRAW pNMCD = reinterpret_cast<LPNMCUSTOMDRAW>(pNMHDR);
+	// TODO: 在此添加控件通知处理程序代码
+	CSliderCtrl* slider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER_THREADNUM);
+	CString text("");
+	m_nThreadNum = slider->GetPos();
+	text.Format(_T("%d"), m_nThreadNum);
+	GetDlgItem(IDC_STATIC_THREADNUM)->SetWindowText(text);
+
+
+	*pResult = 0;
+}
+
+void CTestMFCDlg::OnBnClickedButtonDeal()
+{
+	// TODO: 在此添加控件通知处理程序代码
+	CComboBox* cmb_function = ((CComboBox*)GetDlgItem(IDC_COMBO_FUNCTION));
+	int func = cmb_function->GetCurSel();
+	if (m_pImgSrc != NULL) { // 避免没添加图片时出错
+		switch (func)
+		{
+		case 0:  //椒盐噪声
+			AddNoise();
+			break;
+		case 1: //自适应中值滤波
+			MedianFilter();
+			break;
+		default:
+			break;
+		}
 	}
 }
