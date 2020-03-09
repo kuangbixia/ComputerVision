@@ -142,6 +142,7 @@ UINT ImageProcess::medianFilter(LPVOID  p)
 	return 0;
 }
 
+// Ω∑—Œ‘Î…˘
 UINT ImageProcess::addNoise(LPVOID  p)
 {
 	ThreadParam* param = (ThreadParam*)p;

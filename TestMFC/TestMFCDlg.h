@@ -72,8 +72,6 @@ public:
 	CEdit mEditInfo;
 	CStatic mPictureControl;
 
-	afx_msg void OnCbnSelchangeComboFunction();
-	afx_msg void OnCbnSelchangeComboThread();
 	afx_msg void OnNMCustomdrawSliderThreadnum(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedButtonDeal();
 };
