@@ -1,0 +1,101 @@
+## MFC
+- MFC(Microsoft Foundation Classes)，是微软公司提供的一个类库（class libraries），以C++类的形式封装了Windows的API，并且包含一个应用程序框架，以减少应用程序开发人员的工作量。其中包含的类包含大量Windows句柄封装类和很多Windows的内建控件和组件的封装类。
+- 简而言之，MFC是WinAPI与C++的结合。
+- 要明白，MFC不只是一个功能单纯的界面开发系统，最应该花费时间的是**消息和设备环境**。
+- [数据类型](https://baike.baidu.com/item/MFC/2236974#7)
+#### 基于对话框的MFC
+##### 设计窗口
+资源视图->dialog文件下->打开工具箱->添加控件->设置控件ID（以便在cpp文件中调用内置函数获取）->必要时修改Caption（在控件上显示自定义内容）
+##### cpp文件
+一般要包含以下自动生成的头文件：
+- pch.h
+- framework.h
+- cpp对应的头文件
+#### 根cpp的结构
+##### CAboutDlg 对话框
+用于应用程序“关于”菜单项。
+##### C(projectNAME)Dlg 对话框
+实际上就是对应头文件的成员函数的实现。
+###### 构造函数
+一般用于初始化类的成员变量。
+``` C++
+CTestMFCDlg::CTestMFCDlg(CWnd* pParent /*=nullptr*/)
+	: CDialogEx(IDD_TESTMFC_DIALOG, pParent)
+{
+	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
+	// 初始化变量
+	m_pImgSrc = NULL;
+	m_pImgCpy = NULL;
+	m_nThreadNum = 1;
+	m_pThreadParam = new ThreadParam[MAX_THREAD];
+}
+```
+###### DoDataExchange()函数
+一般用于绑定控件的成员变量。
+``` C++
+void CTestMFCDlg::DoDataExchange(CDataExchange* pDX)
+{
+	CDialogEx::DoDataExchange(pDX);
+    // 绑定控件变量
+	DDX_Control(pDX, IDC_EDIT_INFO, mEditInfo);
+	DDX_Control(pDX, IDC_PICTURE, mPictureControl);
+}
+```
+###### 消息函数映射
+- 类似于事件处理
+- 自定义消息函数时要注意：**要在framework.h中定义比WM_USER大的message**，作为ON_MESSAGE()的第一个参数。
+``` C++
+#ifndef WM_MEDIAN_FILTER
+#define WM_MEDIAN_FILTER WM_USER+1
+#endif
+
+#ifndef WM_NOISE
+#define WM_NOISE WM_USER+2
+#endif
+```
+``` C++
+BEGIN_MESSAGE_MAP(CTestMFCDlg, CDialogEx)
+	ON_WM_SYSCOMMAND()
+	ON_WM_PAINT()
+	ON_WM_QUERYDRAGICON()
+
+	// 控件处理消息函数
+	ON_BN_CLICKED(IDC_BUTTON_OPEN, &CTestMFCDlg::OnBnClickedButtonOpen)
+	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER_THREADNUM, &CTestMFCDlg::OnNMCustomdrawSliderThreadnum)
+	ON_BN_CLICKED(IDC_BUTTON_DEAL, &CTestMFCDlg::OnBnClickedButtonDeal)
+
+	// 定义线程通信消息函数
+	ON_MESSAGE(WM_NOISE, &CTestMFCDlg::OnNoiseThreadMsgReceived)
+	ON_MESSAGE(WM_MEDIAN_FILTER, &CTestMFCDlg::OnMedianFilterThreadMsgReceived)
+END_MESSAGE_MAP()
+```
+###### 消息处理程序
+实际上是消息函数映射里函数的实现。
+- OnInitDialog()
+    - 用于初始化窗口
+    - 一般对控件进行初始设置
+    ``` C++
+        // 1.通过控件绑定的变量调用接口
+        mEditInfo.SetWindowTextW(CString("显示图片路径"));
+        // 2.通过控件ID获取控件来调用接口
+	    CComboBox* cmb_function = (CComboBox*)GetDlgItem(IDC_COMBO_FUNCTION);
+	    cmb_function->AddString(_T("椒盐噪声"));
+	    cmb_function->AddString(_T("自适应中值滤波"));
+	    cmb_function->SetCurSel(0);
+    ```
+- OnSysCommand()
+    - 暂时不理
+- OnPaint()
+    - 窗口处于最小化状态
+        - 暂时不理
+        - 有调用SendMessage()消息函数
+    - 窗口不处于最小化状态
+        - 必要时绘制
+- OnQueryDragIcon()
+    - 暂时不理
+- 控件处理消息函数
+    - 点击/滑动/选择控件后调用的函数
+- 自定义的线程通信消息**接收**函数
+    - 传入参数WPARAM，为0则是发送消息，为1则是接收消息。
+###### 自定义函数的实现
+一般是为了重用。

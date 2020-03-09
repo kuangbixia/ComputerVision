@@ -80,7 +80,6 @@ BEGIN_MESSAGE_MAP(CTestMFCDlg, CDialogEx)
 	// 定义线程通信消息函数
 	ON_MESSAGE(WM_NOISE, &CTestMFCDlg::OnNoiseThreadMsgReceived)
 	ON_MESSAGE(WM_MEDIAN_FILTER, &CTestMFCDlg::OnMedianFilterThreadMsgReceived)
-	ON_BN_CLICKED(IDC_CHECK_CIRCULATION, &CTestMFCDlg::OnBnClickedCheckCirculation)
 END_MESSAGE_MAP()
 
 
@@ -158,7 +157,7 @@ void CTestMFCDlg::OnSysCommand(UINT nID, LPARAM lParam)
 
 void CTestMFCDlg::OnPaint()
 {
-	// 判断窗口是否在最小化状态？？
+	// 判断窗口是否在最小化状态
 	if (IsIconic())
 	{
 		CPaintDC dc(this); // 用于绘制的设备上下文
@@ -466,7 +465,7 @@ LRESULT CTestMFCDlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 	static int tempThreadCount = 0;
 	static int tempProcessCount = 0;
 	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
-	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 100;
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
@@ -485,7 +484,7 @@ LRESULT CTestMFCDlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 
 				CTime endTime = CTime::GetTickCount();
 				CString timeStr;
-				timeStr.Format(_T("处理：%d次，耗时：%dms"), circulation, (endTime - startTime));
+				timeStr.Format(_T("噪声处理：%d次，耗时：%dms"), circulation, (endTime - startTime));
 				// 显示窗口
 				AfxMessageBox(timeStr);
 			}
@@ -500,7 +499,7 @@ LRESULT CTestMFCDlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lPara
 	static int tempThreadCount = 0;
 	static int tempProcessCount = 0;
 	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
-	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 100;
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
@@ -519,7 +518,7 @@ LRESULT CTestMFCDlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lPara
 
 				CTime endTime = CTime::GetTickCount();
 				CString timeStr;
-				timeStr.Format(_T("处理：%d次，耗时：%dms"), circulation, (endTime - startTime));
+				timeStr.Format(_T("滤波处理：%d次，耗时：%dms"), circulation, (endTime - startTime));
 				// 显示窗口
 				AfxMessageBox(timeStr);
 			}

@@ -48,7 +48,7 @@
 
 
 
-// 自定义的线程间通信消息
+// 自定义的线程间通信消息，注意要比WM_USER大，才能把消息放到恰当的地方
 #ifndef WM_MEDIAN_FILTER
 #define WM_MEDIAN_FILTER WM_USER+1
 #endif
