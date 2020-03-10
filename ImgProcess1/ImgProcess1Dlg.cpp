@@ -340,7 +340,7 @@ void CImgProcess1Dlg::filter_OPENMP()
 	}
 }
 
-LRESULT CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 {
 	static int tempThreadCount = 0;
 	static int tempProcessCount = 0;
@@ -364,10 +364,10 @@ LRESULT CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived(WPARAM wParam, LPARAM lPar
 
 				CString text;
 				mEditOutput.GetWindowTextW(text);
-				text += "进行椒盐噪声处理。";
+				text += m_pageNoise.mNoiseType.GetCurSel() == 0 ? "进行椒盐噪声处理。" : "进行高斯噪声处理。";
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("处理：%d次，线程：%d个，耗时：%dms。\r\n>"), circulation, m_nThreadNum, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%dms。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
 				mEditOutput.SetWindowTextW(text);
 			}
@@ -376,7 +376,7 @@ LRESULT CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived(WPARAM wParam, LPARAM lPar
 	return 0;
 }
 
-LRESULT CImgProcess1Dlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 {
 	static int tempThreadCount = 0;
 	static int tempProcessCount = 0;
@@ -400,10 +400,31 @@ LRESULT CImgProcess1Dlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM l
 
 				CString text;
 				mEditOutput.GetWindowTextW(text);
-				text += "进行自适应中值滤波。";
+				switch (m_pageFilter.mFilterType.GetCurSel()) {
+				case 0: // 自适应中值滤波
+				{
+					text += "进行自适应中值滤波。";
+					break;
+				}
+				case 1: // todo:平滑线性滤波
+				{
+					text += "进行平滑线性滤波。";
+					break;
+				}
+				case 2: // todo:高斯滤波
+				{
+					text += "进行高斯滤波。";
+					break;
+				}
+				case 3: // todo:维纳滤波
+				{
+					text += "进行维纳滤波。";
+					break;
+				}
+				}
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("处理：%d次，线程：%d个，耗时：%dms。\r\n>"), circulation, m_nThreadNum, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%dms。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
 				mEditOutput.SetWindowTextW(text);
 			}
@@ -422,8 +443,8 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PROCESS, &CImgProcess1Dlg::OnBnClickedButtonProcess)
 
 	// 定义线程通信消息函数
-	ON_MESSAGE(WM_SALT_NOISE, &CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived)
-	ON_MESSAGE(WM_MEDIAN_FILTER, &CImgProcess1Dlg::OnMedianFilterThreadMsgReceived)
+	ON_MESSAGE(WM_NOISE, &CImgProcess1Dlg::OnNoiseThreadMsgReceived)
+	ON_MESSAGE(WM_FILTER, &CImgProcess1Dlg::OnFilterThreadMsgReceived)
 END_MESSAGE_MAP()
 
 

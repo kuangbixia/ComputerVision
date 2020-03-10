@@ -138,7 +138,7 @@ UINT ImageProcess::medianFilter(LPVOID  p)
 	delete[]pixelB;
 	
 	// 传递消息
-	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_MEDIAN_FILTER, 1, NULL);
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
 	return 0;
 }
 
@@ -190,6 +190,6 @@ UINT ImageProcess::saltNoise(LPVOID  p)
 	}
 	
 	// 传递消息
-	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_SALT_NOISE, 1, NULL);
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_NOISE, 1, NULL);
 	return 0;
 }
