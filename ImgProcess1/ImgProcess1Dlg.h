@@ -38,6 +38,9 @@ public:
 	void filter_WIN();
 	void filter_OPENMP();
 
+	// 线程通信消息函数
+	afx_msg LRESULT OnSaltNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 
 // 实现
 protected:

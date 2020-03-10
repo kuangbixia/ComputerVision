@@ -47,3 +47,9 @@
 #endif
 
 
+
+// 自定义的线程间通信消息，注意要比WM_USER大，才能把消息放到恰当的地方
+
+#define WM_SALT_NOISE WM_USER+1
+
+#define WM_MEDIAN_FILTER WM_USER+2

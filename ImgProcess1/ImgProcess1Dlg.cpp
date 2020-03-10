@@ -70,7 +70,7 @@ void CImgProcess1Dlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_PICTURE_LEFT, mPicCtrlLeft);
 	DDX_Control(pDX, IDC_PICTURE_RIGHT, mPicCtrlRight);
 	DDX_Control(pDX, IDC_EDIT_OUTPUT, mEditOutput);
-	DDX_Control(pDX, IDC_COMBO1, mThreadType);
+	DDX_Control(pDX, IDC_COMBO_THREAD, mThreadType);
 }
 
 void CImgProcess1Dlg::setTab()
@@ -176,8 +176,7 @@ UINT CImgProcess1Dlg::Update(void* p)
 
 void CImgProcess1Dlg::addNoise()
 {
-	CComboBox* cmb_thread = ((CComboBox*)GetDlgItem(IDC_COMBO_THREAD));
-	int thread = cmb_thread->GetCurSel();
+	int thread = mThreadType.GetCurSel();
 
 	//startTime = CTime::GetTickCount();
 
@@ -206,7 +205,7 @@ void CImgProcess1Dlg::addNoise_WIN()
 			(i + 1) * subLength - 1 : m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() - 1;
 		// windows MFC 创建线程
 		switch (m_pageNoise.mNoiseType.GetCurSel()) {
-		case 0:
+		case 0: // 椒盐噪声
 		{
 			AfxBeginThread((AFX_THREADPROC)&ImageProcess::saltNoise, &m_pThreadParam[i]);
 			break;
@@ -251,8 +250,7 @@ void CImgProcess1Dlg::addNoise_OPENMP()
 
 void CImgProcess1Dlg::filter()
 {
-	CComboBox* cmb_thread = ((CComboBox*)GetDlgItem(IDC_COMBO_THREAD));
-	int thread = cmb_thread->GetCurSel();
+	int thread = mThreadType.GetCurSel();
 
 	//startTime = CTime::GetTickCount();
 
@@ -342,6 +340,78 @@ void CImgProcess1Dlg::filter_OPENMP()
 	}
 }
 
+LRESULT CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	static int tempThreadCount = 0;
+	static int tempProcessCount = 0;
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
+
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+		if (m_nThreadNum == ++tempThreadCount) // 每个线程都处理完
+		{
+			// 为下一次循环初始化
+			tempThreadCount = 0;
+
+			if (++tempProcessCount < circulation)
+				addNoise();
+			else // 循环结束
+			{
+				CTime endTime = CTime::GetTickCount();
+				// 为下一次处理初始化
+				tempProcessCount = 0;
+
+				CString text;
+				mEditOutput.GetWindowTextW(text);
+				text += "进行椒盐噪声处理。";
+				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+				CString timeStr;
+				timeStr.Format(_T("处理：%d次，线程：%d个，耗时：%dms。\r\n>"), circulation, m_nThreadNum, (endTime - startTime));
+				text += timeStr;
+				mEditOutput.SetWindowTextW(text);
+			}
+		}
+	}
+	return 0;
+}
+
+LRESULT CImgProcess1Dlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	static int tempThreadCount = 0;
+	static int tempProcessCount = 0;
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
+
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+		if (m_nThreadNum == ++tempThreadCount) // 每个线程都处理完
+		{
+			// 为下一次循环初始化
+			tempThreadCount = 0;
+
+			if (++tempProcessCount < circulation)
+				filter();
+			else // 循环结束
+			{
+				CTime endTime = CTime::GetTickCount();
+				// 为下一次处理初始化
+				tempProcessCount = 0;
+
+				CString text;
+				mEditOutput.GetWindowTextW(text);
+				text += "进行自适应中值滤波。";
+				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+				CString timeStr;
+				timeStr.Format(_T("处理：%d次，线程：%d个，耗时：%dms。\r\n>"), circulation, m_nThreadNum, (endTime - startTime));
+				text += timeStr;
+				mEditOutput.SetWindowTextW(text);
+			}
+		}
+	}
+	return 0;
+}
+
 BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
@@ -350,6 +420,10 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_NOTIFY(TCN_SELCHANGE, IDC_TAB, &CImgProcess1Dlg::OnTcnSelchangeTab)
 	ON_NOTIFY(NM_CUSTOMDRAW, IDC_SLIDER, &CImgProcess1Dlg::OnNMCustomdrawSlider)
 	ON_BN_CLICKED(IDC_BUTTON_PROCESS, &CImgProcess1Dlg::OnBnClickedButtonProcess)
+
+	// 定义线程通信消息函数
+	ON_MESSAGE(WM_SALT_NOISE, &CImgProcess1Dlg::OnSaltNoiseThreadMsgReceived)
+	ON_MESSAGE(WM_MEDIAN_FILTER, &CImgProcess1Dlg::OnMedianFilterThreadMsgReceived)
 END_MESSAGE_MAP()
 
 
@@ -387,12 +461,12 @@ BOOL CImgProcess1Dlg::OnInitDialog()
 	// TODO: 在此添加额外的初始化代码
 
 	mEditInfo.SetWindowTextW(CString("显示图片路径"));
-	mEditOutput.SetWindowTextW(CString("参数输出"));
+	mEditOutput.SetWindowTextW(CString(">"));
 
 	setTab();
 
-	mThreadType.AddString(_T("Windows多线程"));
-	mThreadType.AddString(_T("OpenMP"));
+	mThreadType.InsertString(0, _T("Windows多线程"));
+	mThreadType.InsertString(1, _T("OpenMP"));
 	mThreadType.SetCurSel(0);
 
 	CSliderCtrl* slider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER);
@@ -468,7 +542,10 @@ void CImgProcess1Dlg::OnPaint()
 			// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
 			m_pImgSrc->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
 
-			mEditOutput.SetWindowTextW(CString("成功输入图像。"));
+			CString text;
+			mEditOutput.GetWindowTextW(text);
+			text += "成功输入图像。\r\n>";
+			mEditOutput.SetWindowTextW(text);
 
 			// CDC消耗很大，要及时释放
 			ReleaseDC(pDC);
@@ -546,9 +623,16 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	if (m_pImgSrc == NULL) {
-		mEditOutput.SetWindowTextW(_T("你还没有打开图片。"));
+		CString text;
+		mEditOutput.GetWindowTextW(text);
+		text += "你还没有打开图片。\r\n>";
+		mEditOutput.SetWindowTextW(text);
 	}
 	else {
+		CString text;
+		mEditOutput.GetWindowTextW(text);
+		text += "正在处理……\r\n>";
+		mEditOutput.SetWindowTextW(text);
 		switch (curPage) {
 		case 0:
 			break;

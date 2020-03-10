@@ -119,8 +119,8 @@ BOOL CTestMFCDlg::OnInitDialog()
 	mEditInfo.SetWindowTextW(CString("显示图片路径"));
 
 	CComboBox* cmb_function = (CComboBox*)GetDlgItem(IDC_COMBO_FUNCTION);
-	cmb_function->AddString(_T("椒盐噪声"));
-	cmb_function->AddString(_T("自适应中值滤波"));
+	cmb_function->InsertString(0, _T("椒盐噪声"));
+	cmb_function->InsertString(1, _T("自适应中值滤波"));
 	cmb_function->SetCurSel(0);
 
 	CComboBox* cmb_thread = (CComboBox*)GetDlgItem(IDC_COMBO_THREAD);
