@@ -99,3 +99,68 @@ END_MESSAGE_MAP()
     - 传入参数WPARAM，为0则是发送消息，为1则是接收消息。
 ###### 自定义函数的实现
 一般是为了重用。
+
+#### 自定义消息函数
+- 要先定义消息
+	- 要比WM_USER大
+	- 通过这个变量来绑定消息的发送与接收
+		- 发送消息时会传入它作为参数，以便接收函数识别
+		``` C++
+			::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_MEDIAN_FILTER, 1, NULL);
+		```
+		- 接收消息函数在定义时，把它作为参数传入绑定发送消息和相应处理的函数
+		``` C++
+			ON_MESSAGE(WM_MEDIAN_FILTER, &CTestMFCDlg::OnMedianFilterThreadMsgReceived)
+		```
+``` C++
+#ifndef WM_MEDIAN_FILTER
+#define WM_MEDIAN_FILTER WM_USER+1
+#endif
+```
+- 发送消息
+``` C++
+	// 传递消息
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_MEDIAN_FILTER, 1, NULL);
+```
+- 接收消息，要自己定义一个接收消息函数
+``` C++
+	// 消息接收处理函数
+	LRESULT CImgProcess1Dlg::OnMedianFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+		...
+	}
+	return 0;
+}
+```
+
+#### 分页
+- 使用Tab Control控件。
+- 新建对话框，并对它创建对应的类。注意：在新建的对话框点击鼠标右键->添加类，会省很多麻烦事。
+- 在根对话框类头文件中，include新对话框类，使用它声明变量，以便在根cpp中引用新对话框的控件变量。
+	- 可以在根cpp中直接使用新对话框变量对新对话框的控件进行设置。
+	- 调用新对话框的create()函数与tab control控件关联。
+- 将新对话框移动到tab control控件的空白位置，作为tab的一个页面。
+- 使用辅助变量，跟踪tab的当前位置，将其对应的页面（即新对话框）设置为显示(SW_SHOW)，其余的页面则设置为不显示(SW_HIDE)。
+
+#### Edit Control编辑框文本追加及换行
+##### 文本追加
+- GetWindowTextW()获取当前的text内容
+``` C++
+	CString text;
+	mEditOutput.GetWindowTextW(text);
+```
+- +=延长字符串
+- SetWindowTextW()设置新的text内容
+``` C++
+	text += "成功输入图像。\r\n>";
+	mEditOutput.SetWindowTextW(text);
+```
+##### 换行
+- 要在dialog中edit control控件设置属性
+	- Mutilines->true
+	- Want return->true
+	- Horizontal Scroll->TRUE
+	- Vertical Scroll->TRUE
+- 字符串中的换行符不是"\n"，而是"\r\n"
