@@ -55,7 +55,7 @@ CImgProcess1Dlg::CImgProcess1Dlg(CWnd* pParent /*=nullptr*/)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pImgSrc = NULL;
-	m_pImgCpy = NULL;
+	m_pImgShow = NULL;
 	curPage = 0;
 	m_nThreadNum = 1;
 	// 不初始化将导致写入访问权限冲突
@@ -143,9 +143,10 @@ UINT CImgProcess1Dlg::Update(void* p)
 	{
 		Sleep(200);
 		CImgProcess1Dlg* dlg = (CImgProcess1Dlg*)p;
-		if (dlg->m_pImgCpy != NULL) {
-			int picHeight = dlg->m_pImgCpy->GetHeight();
-			int picWidth = dlg->m_pImgCpy->GetWidth();
+		
+		if (dlg->m_pImgShow != NULL) {
+			int picHeight = dlg->m_pImgShow->GetHeight();
+			int picWidth = dlg->m_pImgShow->GetWidth();
 			CRect picCtrlRect;
 			CRect displayRect;
 
@@ -165,8 +166,9 @@ UINT CImgProcess1Dlg::Update(void* p)
 				float scale = xScale <= yScale ? xScale : yScale;
 				displayRect = CRect(picCtrlRect.TopLeft(), CSize((int)picWidth * scale, (int)picHeight * scale));
 			}
+
 			// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
-			dlg->m_pImgCpy->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
+			dlg->m_pImgShow->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
 			// CDC消耗很大，要及时释放
 			dlg->ReleaseDC(pDC);
 		}
@@ -174,11 +176,67 @@ UINT CImgProcess1Dlg::Update(void* p)
 	return 0;
 }
 
+void CImgProcess1Dlg::scale()
+{
+	int thread = mThreadType.GetCurSel();
+	float x = 0.5, y = 0.5;
+	CImage* img = new CImage();
+	img->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), 0);
+
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		CString text;
+		mEditOutput.GetWindowTextW(text);
+		text += "WIN多线程。\r\n";
+		mEditOutput.SetWindowTextW(text);
+		scale_WIN(x, y, img, m_pImgShow);
+		break;
+	}
+	case 1: // OpenMP
+	{
+		scale_OPENMP(x, y, img, m_pImgShow);
+		break;
+	}
+	}
+}
+
+void CImgProcess1Dlg::scale_WIN(float x, float y, CImage* goal, CImage* src)
+{
+	// 每个线程处理的像素数
+	int subLength = goal->GetWidth() * goal->GetHeight() / m_nThreadNum;
+
+	for (int i = 0; i < m_nThreadNum; ++i)
+	{
+		m_pThreadParam[i].img = goal;
+		m_pThreadParam[i].startIndex = i * subLength;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
+			(i + 1) * subLength - 1 : goal->GetWidth() * goal->GetHeight() - 1;
+
+		// windows MFC 创建线程
+		AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, (&m_pThreadParam[i], x, y, src));
+	}
+}
+
+void CImgProcess1Dlg::scale_OPENMP(float x, float y, CImage* goal, CImage* src)
+{
+	// 每个线程处理的像素数
+	int subLength = goal->GetWidth() * goal->GetHeight() / m_nThreadNum;
+
+	// 把for循环分给各个线程执行！！和windows多线程不一样
+#pragma omp parallel for num_threads(m_nThreadNum)
+	for (int i = 0; i < m_nThreadNum; i++) {
+		m_pThreadParam[i].img = goal;
+		m_pThreadParam[i].startIndex = i * subLength;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
+			(i + 1) * subLength - 1 : goal->GetWidth() * goal->GetHeight() - 1;
+		ImageProcess::cubicScale(&m_pThreadParam[i],x,y,src);
+	}
+}
+
 void CImgProcess1Dlg::addNoise()
 {
 	int thread = mThreadType.GetCurSel();
-
-	//startTime = CTime::GetTickCount();
 
 	switch (thread) {
 	case 0: // WIN多线程
@@ -196,13 +254,13 @@ void CImgProcess1Dlg::addNoise()
 
 void CImgProcess1Dlg::addNoise_WIN()
 {
-	int subLength = m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() / m_nThreadNum;
+	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
 	for (int i = 0; i < m_nThreadNum; ++i)
 	{
-		m_pThreadParam[i].src = m_pImgCpy;
+		m_pThreadParam[i].img = m_pImgShow;
 		m_pThreadParam[i].startIndex = i * subLength;
 		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() - 1;
+			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
 		// windows MFC 创建线程
 		switch (m_pageNoise.mNoiseType.GetCurSel()) {
 		case 0: // 椒盐噪声
@@ -221,18 +279,18 @@ void CImgProcess1Dlg::addNoise_WIN()
 void CImgProcess1Dlg::addNoise_OPENMP()
 {
 	// 每个线程处理的像素数
-	int subLength = m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() / m_nThreadNum;
+	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
 
 	// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(m_nThreadNum)
 	for (int i = 0; i < m_nThreadNum; i++) {
-		m_pThreadParam[i].src = m_pImgCpy;
+		m_pThreadParam[i].img = m_pImgShow;
 		m_pThreadParam[i].startIndex = i * subLength;
 		if (i != m_nThreadNum - 1) {
 			m_pThreadParam[i].endIndex = (i + 1) * subLength - 1;
 		}
 		else {
-			m_pThreadParam[i].endIndex = m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() - 1;
+			m_pThreadParam[i].endIndex = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
 		}
 		switch (m_pageNoise.mNoiseType.GetCurSel()) {
 		case 0: // 椒盐噪声
@@ -252,8 +310,6 @@ void CImgProcess1Dlg::filter()
 {
 	int thread = mThreadType.GetCurSel();
 
-	//startTime = CTime::GetTickCount();
-
 	switch (thread) {
 	case 0: // WIN多线程
 	{
@@ -271,16 +327,16 @@ void CImgProcess1Dlg::filter()
 
 void CImgProcess1Dlg::filter_WIN()
 {
-	int subLength = m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() / m_nThreadNum;
-	int h = m_pImgCpy->GetHeight() / m_nThreadNum;
-	int w = m_pImgCpy->GetWidth() / m_nThreadNum;
+	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
+	int h = m_pImgShow->GetHeight() / m_nThreadNum;
+	int w = m_pImgShow->GetWidth() / m_nThreadNum;
 	for (int i = 0; i < m_nThreadNum; ++i)
 	{
 		m_pThreadParam[i].startIndex = i * subLength;
 		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() - 1;
+			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
 		m_pThreadParam[i].maxSpan = MAX_SPAN;
-		m_pThreadParam[i].src = m_pImgCpy;
+		m_pThreadParam[i].img = m_pImgShow;
 		// windows MFC 创建线程
 		switch (m_pageFilter.mFilterType.GetCurSel()) {
 		case 0: // 自适应中值滤波
@@ -307,7 +363,7 @@ void CImgProcess1Dlg::filter_WIN()
 void CImgProcess1Dlg::filter_OPENMP()
 {
 	// 每个线程处理的像素数
-	int subLength = m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() / m_nThreadNum;
+	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
 
 	// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(m_nThreadNum)
@@ -315,9 +371,9 @@ void CImgProcess1Dlg::filter_OPENMP()
 	{
 		m_pThreadParam[i].startIndex = i * subLength;
 		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgCpy->GetWidth() * m_pImgCpy->GetHeight() - 1;
+			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
 		m_pThreadParam[i].maxSpan = MAX_SPAN;
-		m_pThreadParam[i].src = m_pImgCpy;
+		m_pThreadParam[i].img = m_pImgShow;
 		switch (m_pageFilter.mFilterType.GetCurSel()) {
 		case 0: // 自适应中值滤波
 		{
@@ -433,6 +489,30 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
+LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	static int tempThreadCount = 0;
+
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+		if (m_nThreadNum == ++tempThreadCount) // 每个线程都处理完
+		{
+			m_pImgShow = m_pThreadParam[0].img;
+			CTime endTime = CTime::GetTickCount();
+			CString text;
+			mEditOutput.GetWindowTextW(text);
+			text += "进行缩放处理。";
+			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+			CString timeStr;
+			timeStr.Format(_T("线程：%d个，耗时：%dms。\r\n>"), m_nThreadNum, (endTime - startTime));
+			text += timeStr;
+			mEditOutput.SetWindowTextW(text);
+			
+		}
+	}
+	return 0;
+}
+
 BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
 	ON_WM_PAINT()
@@ -445,6 +525,7 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	// 定义线程通信消息函数
 	ON_MESSAGE(WM_NOISE, &CImgProcess1Dlg::OnNoiseThreadMsgReceived)
 	ON_MESSAGE(WM_FILTER, &CImgProcess1Dlg::OnFilterThreadMsgReceived)
+	ON_MESSAGE(WM_SCALE, &CImgProcess1Dlg::OnScaleThreadMsgReceived)
 END_MESSAGE_MAP()
 
 
@@ -602,14 +683,14 @@ void CImgProcess1Dlg::OnBnClickedButtonOpen()
 			m_pImgSrc->Destroy();
 			delete m_pImgSrc;
 		}
-		if (m_pImgCpy != NULL) {
-			m_pImgCpy->Destroy();
-			delete m_pImgCpy;
+		if (m_pImgShow != NULL) {
+			m_pImgShow->Destroy();
+			delete m_pImgShow;
 		}
 		m_pImgSrc = new CImage();
 		m_pImgSrc->Load(strFilePath);
-		m_pImgCpy = new CImage();
-		m_pImgCpy ->Load(strFilePath);
+		m_pImgShow = new CImage();
+		m_pImgShow ->Load(strFilePath);
 		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
 		this->Invalidate();
 	}
@@ -654,20 +735,24 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 		mEditOutput.GetWindowTextW(text);
 		text += "正在处理……\r\n>";
 		mEditOutput.SetWindowTextW(text);
+		/*
+		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
+		this->Invalidate();*/
+
+		startTime = CTime::GetTickCount();
 		switch (curPage) {
 		case 0:
+			scale();
 			break;
 		case 1:
 			break;
 		case 2:
 		{
-			startTime = CTime::GetTickCount();
 			addNoise();
 			break;
 		}
 		case 3:
 		{
-			startTime = CTime::GetTickCount();
 			filter();
 			break;
 		}

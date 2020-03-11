@@ -31,6 +31,9 @@ public:
 	// 辅助函数
 	void setTab();
 	static UINT Update(void* p);
+	void scale();
+	void scale_WIN(float x, float y, CImage* goal, CImage* src);
+	void scale_OPENMP(float x, float y, CImage* goal, CImage* src);
 	void addNoise();
 	void addNoise_WIN();
 	void addNoise_OPENMP();
@@ -41,12 +44,13 @@ public:
 	// 线程通信消息函数
 	afx_msg LRESULT OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 
 // 实现
 protected:
 	HICON m_hIcon;
 	CImage* m_pImgSrc;
-	CImage* m_pImgCpy;
+	CImage* m_pImgShow;
 	int m_nThreadNum;
 	ThreadParam* m_pThreadParam;
 	CTime startTime;
