@@ -13,6 +13,17 @@
 #define MAX_THREAD 8
 #define MAX_SPAN 15
 
+struct DrawPara
+{
+	CImage* pImgSrc;
+	CDC* pDC;
+	int oriX;
+	int oriY;
+	int width;
+	int height;
+};
+
+
 // CImgProcess1Dlg 对话框
 class CImgProcess1Dlg : public CDialogEx
 {
@@ -31,9 +42,12 @@ public:
 	// 辅助函数
 	void setTab();
 	static UINT Update(void* p);
+	void imageCopy(CImage* pImgSrc, CImage* pImgDrt);
+	void threadDraw(DrawPara* p);
+
 	void scale();
-	void scale_WIN(float x, float y, CImage* goal, CImage* src);
-	void scale_OPENMP(float x, float y, CImage* goal, CImage* src);
+	void scale_WIN(float x, float y);
+	void scale_OPENMP(float x, float y);
 	void addNoise();
 	void addNoise_WIN();
 	void addNoise_OPENMP();
@@ -51,6 +65,7 @@ protected:
 	HICON m_hIcon;
 	CImage* m_pImgSrc;
 	CImage* m_pImgShow;
+	CImage* m_pImgScale;
 	int m_nThreadNum;
 	ThreadParam* m_pThreadParam;
 	CTime startTime;

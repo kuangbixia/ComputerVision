@@ -57,32 +57,41 @@ static bool GetValue(int p[], int size, int& value)
 
 }
 
-UINT ImageProcess::cubicScale(LPVOID p, float xscale, float yscale, CImage* src)
+UINT ImageProcess::cubicScale(LPVOID p)
 {
 	ThreadParam* param = (ThreadParam*)p;
+
+	// img data
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
 	
-	for (int i = param->startIndex; i < param->endIndex; ++i)
+	int startIndex = param->startIndex;
+	int endIndex = param->endIndex;
+
+	// src data
+	int srcWidth = param->src->GetWidth();
+	int srcHeight = param->src->GetHeight();
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+	
+	for (int i = startIndex; i <= endIndex; ++i)
 	{
-		int imgWidth = param->img->GetWidth();
-		int imgHeight = param->img->GetHeight();
-		int srcWidth = src->GetWidth();
-		int srcHeight = src->GetHeight();
 		int ix = i % imgWidth;
 		int iy = i / imgWidth;
+
 		double x = ix / ((double)imgWidth / srcWidth);
 		double y = iy / ((double)imgHeight / srcHeight);
 		int fx = (int)x, fy = (int)y;
+		fx = fx < 0 ? 0 : fx;
+		fx = fx > srcWidth - 1 ? srcWidth - 1 : fx;
+		fy = fy < 0 ? 0 : fy;
+		fy = fy > srcHeight - 1 ? srcHeight - 1 : fy;
 
-		// Handle the border
-		if (fx - 1 <= 0 || fx + 2 >= srcWidth - 1 || fy - 1 <= 0 || fy + 2 >= srcHeight - 1)
-		{
-			fx = fx < 0 ? 0 : fx;
-			fx = fx >= srcWidth ? srcWidth - 1 : fx;
-			fy = fy < 0 ? 0 : fy;
-			fy = fy >= srcHeight ? srcHeight - 1 : fy;
-			param->img->SetPixel(ix, iy, src->GetPixel(fx, fy));
-			continue;
-		}
+		//*(pImgData + imgPit * iy + ix * imgBitCount) = *(pSrcData + srcPit * fy + fx * srcBitCount);
+
 		// Calc w
 		double wx[4], wy[4];
 		wx[0] = BicubicWeight(fx - 1 - x);
@@ -94,14 +103,8 @@ UINT ImageProcess::cubicScale(LPVOID p, float xscale, float yscale, CImage* src)
 		wy[2] = BicubicWeight(fy + 1 - y);
 		wy[3] = BicubicWeight(fy + 2 - y);
 
-		// Get pixels
+		// Get 4*4 pixels
 		byte* p[4][4];
-		byte* pSrcData = (byte*)src->GetBits();
-		// GetBPP()每个像素的位数
-		// 每个像素的字节数
-		int srcBitCount = src->GetBPP() / 8;
-		// GetPitch()图像的间距
-		int srcPit = src->GetPitch();
 #define FILLPX(x, y, i, j) p[i][j]=pSrcData + srcPit * fy + fx * srcBitCount
 		FILLPX(fx - 1, fy - 1, 0, 0);
 		FILLPX(fx - 1, fy + 0, 0, 1);
@@ -121,32 +124,24 @@ UINT ImageProcess::cubicScale(LPVOID p, float xscale, float yscale, CImage* src)
 		FILLPX(fx + 2, fy + 2, 3, 3);
 #undef FILLPX
 
-		double rgb[3];
-		rgb[0] = rgb[1] = rgb[2] = 0.0;
-		for (int i = 0; i < 4; ++i)
-			for (int j = 0; j < 4; ++j)
-			{
-				rgb[0] += p[i][j][0] * wx[i] * wy[j];
-				rgb[1] += p[i][j][1] * wx[i] * wy[j];
-				rgb[2] += p[i][j][2] * wx[i] * wy[j];
-			}
+		// 计算最终像素值
 		/*for (int i = 0; i < 3; ++i)
 			rgb[i] = std::clamp(rgb[i], 0.0, 255.0);*/
 		byte* pImgData = (byte*)param->img->GetBits();
-		// GetBPP()每个像素的位数
 		// 每个像素的字节数
 		int imgBitCount = param->img->GetBPP() / 8;
 		// GetPitch()图像的间距
 		int imgPit = param->img->GetPitch();
-		for (int i = 0; i < 4; ++i) {
-			for (int j = 0; j < 4; ++j) {
+
+		for (int m = 0; m < 4; ++m) {
+			for (int n = 0; n < 4; ++n) {
 				if (imgBitCount == 1) {
-					*(pImgData + imgPit * iy + ix * imgBitCount) = p[i][j][0] * wx[i] * wy[j];
+					*(pImgData + imgPit * iy + ix * imgBitCount) = p[m][n][0] * wx[m] * wy[n];
 				}
 				else {
-					*(pImgData + imgPit * iy + ix * imgBitCount) = p[i][j][0] * wx[i] * wy[j];
-					*(pImgData + imgPit * iy + ix * imgBitCount + 1) = p[i][j][1] * wx[i] * wy[j];
-					*(pImgData + imgPit * iy + ix * imgBitCount + 2) = p[i][j][2] * wx[i] * wy[j];
+					*(pImgData + imgPit * iy + ix * imgBitCount) = p[m][n][0] * wx[m] * wy[n];
+					*(pImgData + imgPit * iy + ix * imgBitCount + 1) = p[m][n][1] * wx[m] * wy[n];
+					*(pImgData + imgPit * iy + ix * imgBitCount + 2) = p[m][n][2] * wx[m] * wy[n];
 				}
 			}
 		}
