@@ -25,11 +25,29 @@ CInterpolationDlg::~CInterpolationDlg()
 void CInterpolationDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
+	DDX_Control(pDX, IDC_COMBO_SorR, mScaleOrRotate);
+	DDX_Control(pDX, IDC_EDIT_XSCALE, mEditXscale);
+	DDX_Control(pDX, IDC_EDIT_YSCALE, mEditYscale);
+}
+
+BOOL CInterpolationDlg::OnInitDialog()
+{
+	CDialog::OnInitDialog();
+	mScaleOrRotate.InsertString(0, _T("缩放"));
+	mScaleOrRotate.InsertString(1, _T("旋转"));
+	mScaleOrRotate.SetCurSel(0);
+	return 0;
 }
 
 void CInterpolationDlg::scale(void* p)
 {
-	float x = 0.5, y = 0.5;
+	CString xText, yText;
+	mEditXscale.GetWindowTextW(xText);
+	mEditYscale.GetWindowTextW(yText);
+	if (xText.IsEmpty()) {
+	}
+	float x = _ttof(xText);
+	float y = _ttof(yText);
 
 	dlg = new CImgProcess1Dlg();
 	dlg = (CImgProcess1Dlg*)p;

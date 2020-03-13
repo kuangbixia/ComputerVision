@@ -75,7 +75,7 @@ void CImgProcess1Dlg::DoDataExchange(CDataExchange* pDX)
 void CImgProcess1Dlg::setTab()
 {
 	// Tab分页
-	mTabControl.InsertItem(0, _T("缩放"));
+	mTabControl.InsertItem(0, _T("三次插值"));
 	mTabControl.InsertItem(1, _T("傅里叶变换"));
 	mTabControl.InsertItem(2, _T("噪声"));
 	mTabControl.InsertItem(3, _T("滤波"));
@@ -233,23 +233,13 @@ LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 
 			imageCopy(m_pImgTemp, m_pImgShow);
 
-
-			CString text2;
-			mEditOutput.GetWindowTextW(text2);
-			CString lstrS;
-			lstrS.Format(_T("finished. img scale width: %d, img scale height: %d. img show width: %d, img show height: %d.\r\n>"), m_pImgTemp->GetWidth(), m_pImgTemp->GetHeight(), m_pImgShow->GetWidth(), m_pImgShow->GetHeight());
-			text2 += lstrS;
-			mEditOutput.SetWindowTextW(text2);
-
 			CTime endTime = CTime::GetTickCount();
-			CString text;
-			mEditOutput.GetWindowTextW(text);
-			text += "进行缩放处理。";
+			CString text("进行缩放处理。");
 			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 			CString timeStr;
-			timeStr.Format(_T("线程：%d个，耗时：%ds。\r\n>"), m_nThreadNum, (endTime - startTime));
+			timeStr.Format(_T("线程：%d个，耗时：%ds。"), m_nThreadNum, (endTime - startTime));
 			text += timeStr;
-			mEditOutput.SetWindowTextW(text);
+			printLine(text);
 
 		}
 	}
@@ -283,14 +273,12 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				m_pThreadParam = new ThreadParam[MAX_THREAD];
 
 
-				CString text;
-				mEditOutput.GetWindowTextW(text);
-				text += m_pageNoise.mNoiseType.GetCurSel() == 0 ? "进行椒盐噪声处理。" : "进行高斯噪声处理。";
+				CString text(m_pageNoise.mNoiseType.GetCurSel() == 0 ? "进行椒盐噪声处理。" : "进行高斯噪声处理。");
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
-				mEditOutput.SetWindowTextW(text);
+				printLine(text);
 			}
 		}
 	}
@@ -320,8 +308,7 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				// 为下一次处理初始化
 				tempProcessCount = 0;
 
-				CString text;
-				mEditOutput.GetWindowTextW(text);
+				CString text("");
 				switch (m_pageFilter.mFilterType.GetCurSel()) {
 				case 0: // 自适应中值滤波
 				{
@@ -346,9 +333,9 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				}
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
-				mEditOutput.SetWindowTextW(text);
+				printLine(text);
 			}
 		}
 	}
@@ -476,6 +463,15 @@ HCURSOR CImgProcess1Dlg::OnQueryDragIcon()
 
 
 
+void CImgProcess1Dlg::printLine(CString text)
+{
+	CString t;
+	mEditOutput.GetWindowTextW(t);
+	t += text;
+	t += "\r\n>";
+	mEditOutput.SetWindowTextW(t);
+}
+
 void CImgProcess1Dlg::OnBnClickedButtonOpen()
 {
 	// TODO: 在此添加控件通知处理程序代码
@@ -508,10 +504,7 @@ void CImgProcess1Dlg::OnBnClickedButtonOpen()
 
 		Open(this);
 
-		CString text;
-		mEditOutput.GetWindowTextW(text);
-		text += "成功输入图像。\r\n>";
-		mEditOutput.SetWindowTextW(text);
+		printLine(CString("成功输入图像。"));
 
 		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
 		this->Invalidate();
@@ -543,23 +536,28 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	if (m_pImgSrc == NULL) {
-		CString text;
-		mEditOutput.GetWindowTextW(text);
-		text += "你还没有打开图片。\r\n>";
-		mEditOutput.SetWindowTextW(text);
+		printLine(CString("你还没有打开图片。"));
 	}
 	else {
-		CString text;
-		mEditOutput.GetWindowTextW(text);
-		text += "正在处理……\r\n>";
-		mEditOutput.SetWindowTextW(text);
+		printLine(CString("正在处理..."));
 
 		this->Invalidate();
 		
 		startTime = CTime::GetTickCount();
 		switch (curPage) {
 		case 0:
-			m_pageInterpolation.scale(this);
+			switch (m_pageInterpolation.mScaleOrRotate.GetCurSel()) {
+			case 0:
+			{
+				m_pageInterpolation.scale(this);
+				break;
+			}
+			case 1:
+			{
+				break;
+			}
+			}
+			
 			break;
 		case 1:
 			break;

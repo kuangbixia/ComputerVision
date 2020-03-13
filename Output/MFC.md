@@ -164,3 +164,9 @@ END_MESSAGE_MAP()
 	- Horizontal Scroll->TRUE
 	- Vertical Scroll->TRUE
 - 字符串中的换行符不是"\n"，而是"\r\n"
+
+#### CString转float
+```C++
+	CString str("0.5");
+	float f=_ttof(str);
+```

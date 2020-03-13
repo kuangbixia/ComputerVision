@@ -79,15 +79,18 @@ public:
 	CImage* m_pImgTemp;
 	int m_nThreadNum;
 	ThreadParam* m_pThreadParam;
-	afx_msg void OnBnClickedButtonOpen();
 	CEdit mEditInfo;
 	CString strFilePath;
 	CTabCtrl mTabControl;
 	CStatic mPicCtrlLeft;
 	CStatic mPicCtrlRight;
 	CEdit mEditOutput;
-	afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
 	CComboBox mThreadType;
+
+	void printLine(CString text);
+
+	afx_msg void OnBnClickedButtonOpen();
+	afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnNMCustomdrawSlider(NMHDR* pNMHDR, LRESULT* pResult);
 	afx_msg void OnBnClickedButtonProcess();
 };

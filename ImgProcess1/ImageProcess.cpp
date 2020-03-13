@@ -64,8 +64,8 @@ UINT ImageProcess::cubicScale(LPVOID p)
 	// img data
 	//int imgWidth = param->img->GetWidth();
 	//int imgHeight = param->img->GetHeight();
-	int imgWidth = (int)(param->xscale * param->src->GetWidth());
-	int imgHeight = (int)(param->yscale * param->src->GetHeight());
+	int imgWidth = (int)((param->xscale<1?param->xscale:1) * param->src->GetWidth());
+	int imgHeight = (int)((param->yscale<1?param->yscale:1) * param->src->GetHeight());
 	
 	int startIndex = param->startIndex;
 	int endIndex = param->endIndex;

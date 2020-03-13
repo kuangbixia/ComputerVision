@@ -24,6 +24,11 @@ protected:
 	CImgProcess1Dlg* dlg;
 
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
+	virtual BOOL OnInitDialog();
 
 	DECLARE_MESSAGE_MAP()
+public:
+	CComboBox mScaleOrRotate;
+	CEdit mEditXscale;
+	CEdit mEditYscale;
 };
