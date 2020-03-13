@@ -6,7 +6,7 @@ struct ThreadParam
 	CImage* src;
 	int startIndex;
 	int endIndex;
-	int maxSpan;//为模板中心到边缘的距离
+	int maxSpan; // 为模板中心到边缘的距离
 	float xscale;
 	float yscale;
 };

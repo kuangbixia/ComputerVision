@@ -20,12 +20,12 @@ class CAboutDlg : public CDialogEx
 public:
 	CAboutDlg();
 
-// 对话框数据
+	// 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_ABOUTBOX };
 #endif
 
-	protected:
+protected:
 	virtual void DoDataExchange(CDataExchange* pDX);    // DDX/DDV 支持
 
 // 实现
@@ -48,15 +48,13 @@ END_MESSAGE_MAP()
 
 // CImgProcess1Dlg 对话框
 
-
-
 CImgProcess1Dlg::CImgProcess1Dlg(CWnd* pParent /*=nullptr*/)
 	: CDialogEx(IDD_IMGPROCESS1_DIALOG, pParent)
 {
 	m_hIcon = AfxGetApp()->LoadIcon(IDR_MAINFRAME);
 	m_pImgSrc = NULL;
 	m_pImgShow = NULL;
-	m_pImgScale = NULL;
+	m_pImgTemp = NULL;
 	curPage = 0;
 	m_nThreadNum = 1;
 	// 不初始化将导致写入访问权限冲突
@@ -118,7 +116,7 @@ void CImgProcess1Dlg::setTab()
 	m_pageFilter.Create(IDD_FILTER, &mTabControl);
 	m_pageFilter.MoveWindow(&tabRc);
 	m_pageFilter.mFilterType.InsertString(0, _T("自适应中值滤波"));
-	m_pageFilter.mFilterType.InsertString(1,_T("平滑线性滤波"));
+	m_pageFilter.mFilterType.InsertString(1, _T("平滑线性滤波"));
 	m_pageFilter.mFilterType.InsertString(2, _T("高斯滤波"));
 	m_pageFilter.mFilterType.InsertString(3, _T("维纳滤波"));
 	m_pageFilter.mFilterType.SetCurSel(0);
@@ -138,13 +136,47 @@ void CImgProcess1Dlg::setTab()
 	}
 }
 
+void CImgProcess1Dlg::Open(void* p)
+{
+	CImgProcess1Dlg* dlg = (CImgProcess1Dlg*)p;
+	if (dlg->m_pImgSrc != NULL) {
+		int picHeight = dlg->m_pImgSrc->GetHeight();
+		int picWidth = dlg->m_pImgSrc->GetWidth();
+		CRect picCtrlRect;
+		CRect displayRect;
+
+		// CDC————设备上下文对象
+		CDC* pDC = dlg->mPicCtrlLeft.GetDC();
+		// SetStretchBltMode函数，设置指定设备环境中的位图拉伸模式
+		SetStretchBltMode(pDC->m_hDC, STRETCH_HALFTONE);
+
+		// 窗口区分为 client 客户区域 和 非客户区
+		dlg->mPicCtrlLeft.GetClientRect(&picCtrlRect);
+		if (picHeight <= picCtrlRect.Height() && picWidth <= picCtrlRect.Width()) {
+			displayRect = CRect(picCtrlRect.TopLeft(), CSize(picWidth, picHeight));
+		}
+		else {
+			float xScale = (float)picCtrlRect.Width() / (float)picWidth;
+			float yScale = (float)picCtrlRect.Height() / (float)picHeight;
+			float scale = xScale <= yScale ? xScale : yScale;
+			displayRect = CRect(picCtrlRect.TopLeft(), CSize((int)picWidth * scale, (int)picHeight * scale));
+		}
+		// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
+		dlg->m_pImgSrc->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
+
+		// CDC消耗很大，要及时释放
+		dlg->ReleaseDC(pDC);
+	}
+	return;
+}
+
 UINT CImgProcess1Dlg::Update(void* p)
 {
 	while (1)
 	{
 		Sleep(200);
 		CImgProcess1Dlg* dlg = (CImgProcess1Dlg*)p;
-		
+
 		if (dlg->m_pImgShow != NULL) {
 			int picHeight = dlg->m_pImgShow->GetHeight();
 			int picWidth = dlg->m_pImgShow->GetWidth();
@@ -188,7 +220,8 @@ void CImgProcess1Dlg::imageCopy(CImage* pImgSrc, CImage* pImgDrt)
 	{
 		pImgDrt->Destroy();
 	}
-	pImgDrt->Create(pImgSrc->GetWidth(), pImgSrc->GetHeight(), pImgSrc->GetBPP(), 0);
+	int alpha = pImgSrc->GetBPP() == 32 ? 1 : 0;
+	pImgDrt->Create(pImgSrc->GetWidth(), pImgSrc->GetHeight(), pImgSrc->GetBPP(), alpha);
 
 	if (pImgSrc->IsIndexed())
 	{
@@ -204,55 +237,24 @@ void CImgProcess1Dlg::imageCopy(CImage* pImgSrc, CImage* pImgDrt)
 	delete ColorTab;
 }
 
-void CImgProcess1Dlg::threadDraw(DrawPara* p)
-{
-	CRect rect;
-	GetClientRect(&rect);
-	CDC     memDC;             // 用于缓冲绘图的内存画笔  
-	CBitmap memBitmap;         // 用于缓冲绘图的内存画布
-	memDC.CreateCompatibleDC(p->pDC);  // 创建与原画笔兼容的画笔
-	memBitmap.CreateCompatibleBitmap(p->pDC, p->width, p->height);  // 创建与原位图兼容的内存画布
-	memDC.SelectObject(&memBitmap);      // 创建画笔与画布的关联
-	memDC.FillSolidRect(rect, p->pDC->GetBkColor());
-	p->pDC->SetStretchBltMode(HALFTONE);
-	// 将pImgSrc的内容缩放画到内存画布中
-	p->pImgSrc->StretchBlt(memDC.m_hDC, 0, 0, p->width, p->height);
-
-	// 将已画好的画布复制到真正的缓冲区中
-	p->pDC->BitBlt(p->oriX, p->oriY, p->width, p->height, &memDC, 0, 0, SRCCOPY);
-	memBitmap.DeleteObject();
-	memDC.DeleteDC();
-}
+// scale
 
 void CImgProcess1Dlg::scale()
 {
-	int thread = mThreadType.GetCurSel();
 	float x = 0.5, y = 0.5;
 
-	CString text1;
-	mEditOutput.GetWindowTextW(text1);
-	CString lstr;
-	lstr.Format(_T("img show width: %d, img show height: %d.\r\n>"), m_pImgShow->GetWidth(), m_pImgShow->GetHeight());
-	text1 += lstr;
-	mEditOutput.SetWindowTextW(text1);
-
-	if(m_pImgScale != NULL) {
-		m_pImgScale->Destroy();
-		delete m_pImgScale;
-		m_pImgScale = NULL;
+	if (m_pImgTemp != NULL) {
+		m_pImgTemp->Destroy();
+		delete m_pImgTemp;
+		m_pImgTemp = NULL;
 	}
-	
-	m_pImgScale = new CImage();
-	bool yes=m_pImgScale->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), 0);
+	m_pImgTemp = new CImage();
+
+	int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
+	bool yes = m_pImgTemp->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), alpha);
 
 
-	CString text2;
-	mEditOutput.GetWindowTextW(text2);
-	CString lstrS;
-	lstrS.Format(_T("success: %d, img scale width: %d, img scale height: %d.\r\n>"), yes, m_pImgScale->GetWidth(), m_pImgScale->GetHeight());
-	text2 += lstrS;
-	mEditOutput.SetWindowTextW(text2);
-
+	int thread = mThreadType.GetCurSel();
 	switch (thread) {
 	case 0: // WIN多线程
 	{
@@ -270,17 +272,17 @@ void CImgProcess1Dlg::scale()
 void CImgProcess1Dlg::scale_WIN(float x, float y)
 {
 	// 每个线程处理的像素数
-	int subLength = m_pImgScale->GetWidth() * m_pImgScale->GetHeight() / m_nThreadNum;
+	int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
 
 	for (int i = 0; i < m_nThreadNum; ++i)
 	{
-		m_pThreadParam[i].img = m_pImgScale;
+		m_pThreadParam[i].img = m_pImgTemp;
 		m_pThreadParam[i].src = m_pImgShow;
 		m_pThreadParam[i].xscale = x;
 		m_pThreadParam[i].yscale = y;
 		m_pThreadParam[i].startIndex = i * subLength;
 		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgScale->GetWidth() * m_pImgScale->GetHeight() - 1;
+			(i + 1) * subLength - 1 : m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() - 1;
 
 		// windows MFC 创建线程
 		AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, &m_pThreadParam[i]);
@@ -290,21 +292,24 @@ void CImgProcess1Dlg::scale_WIN(float x, float y)
 void CImgProcess1Dlg::scale_OPENMP(float x, float y)
 {
 	// 每个线程处理的像素数
-	int subLength = m_pImgScale->GetWidth() * m_pImgScale->GetHeight() / m_nThreadNum;
+	int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
 
 	// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(m_nThreadNum)
 	for (int i = 0; i < m_nThreadNum; i++) {
-		m_pThreadParam[i].img = m_pImgScale;
+		m_pThreadParam[i].img = m_pImgTemp;
 		m_pThreadParam[i].src = m_pImgShow;
 		m_pThreadParam[i].xscale = x;
 		m_pThreadParam[i].yscale = y;
 		m_pThreadParam[i].startIndex = i * subLength;
 		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgScale->GetWidth() * m_pImgScale->GetHeight() - 1;
+			(i + 1) * subLength - 1 : m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() - 1;
 		ImageProcess::cubicScale(&m_pThreadParam[i]);
 	}
 }
+
+
+// add noise
 
 void CImgProcess1Dlg::addNoise()
 {
@@ -377,6 +382,9 @@ void CImgProcess1Dlg::addNoise_OPENMP()
 		}
 	}
 }
+
+
+// filter
 
 void CImgProcess1Dlg::filter()
 {
@@ -468,6 +476,44 @@ void CImgProcess1Dlg::filter_OPENMP()
 	}
 }
 
+
+// 消息接收
+
+LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	static int scaleThreadCount = 0;
+
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+		if (m_nThreadNum == ++scaleThreadCount) // 每个线程都处理完
+		{
+			// 为下一次处理初始化
+			scaleThreadCount = 0;
+
+			imageCopy(m_pImgTemp, m_pImgShow);
+
+			CString text2;
+			mEditOutput.GetWindowTextW(text2);
+			CString lstrS;
+			lstrS.Format(_T("finished. img scale width: %d, img scale height: %d. img show width: %d, img show height: %d.\r\n>"), m_pImgTemp->GetWidth(), m_pImgTemp->GetHeight(), m_pImgShow->GetWidth(), m_pImgShow->GetHeight());
+			text2 += lstrS;
+			mEditOutput.SetWindowTextW(text2);
+
+			CTime endTime = CTime::GetTickCount();
+			CString text;
+			mEditOutput.GetWindowTextW(text);
+			text += "进行缩放处理。";
+			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+			CString timeStr;
+			timeStr.Format(_T("线程：%d个，耗时：%ds。\r\n>"), m_nThreadNum, (endTime - startTime));
+			text += timeStr;
+			mEditOutput.SetWindowTextW(text);
+
+		}
+	}
+	return 0;
+}
+
 LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 {
 	static int noiseThreadCount = 0;
@@ -487,6 +533,7 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			else // 循环结束
 			{
 				CTime endTime = CTime::GetTickCount();
+
 				// 为下一次处理初始化
 				tempProcessCount = 0;
 				delete[] m_pThreadParam;
@@ -499,7 +546,7 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				text += m_pageNoise.mNoiseType.GetCurSel() == 0 ? "进行椒盐噪声处理。" : "进行高斯噪声处理。";
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%dms。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
 				mEditOutput.SetWindowTextW(text);
 			}
@@ -527,6 +574,7 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			else // 循环结束
 			{
 				CTime endTime = CTime::GetTickCount();
+
 				// 为下一次处理初始化
 				tempProcessCount = 0;
 
@@ -556,7 +604,7 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				}
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%dms。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。\r\n>"), m_nThreadNum, circulation, (endTime - startTime));
 				text += timeStr;
 				mEditOutput.SetWindowTextW(text);
 			}
@@ -565,50 +613,6 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
-{
-	static int scaleThreadCount = 0;
-
-	if ((int)wParam == 1) // 0：发送消息，1：接收消息
-	{
-		if (m_nThreadNum == ++scaleThreadCount) // 每个线程都处理完
-		{
-			// 为下一次处理初始化
-			scaleThreadCount = 0;
-
-
-			DrawPara* draw = new DrawPara;
-			draw->pImgSrc = m_pImgScale;
-			draw->pDC = CDC::FromHandle(m_pImgScale->GetDC());
-			draw->width = m_pImgScale->GetWidth();
-			draw->height = m_pImgScale->GetHeight();
-			draw->oriX = 0;
-			draw->oriY = 0;
-			threadDraw(draw);
-
-			imageCopy(m_pImgScale, m_pImgShow);
-
-			CString text2;
-			mEditOutput.GetWindowTextW(text2);
-			CString lstrS;
-			lstrS.Format(_T("finished. img scale width: %d, img scale height: %d. img show width: %d, img show height: %d.\r\n>"), m_pImgScale->GetWidth(), m_pImgScale->GetHeight(), m_pImgShow->GetWidth(), m_pImgShow->GetHeight());
-			text2 += lstrS;
-			mEditOutput.SetWindowTextW(text2);
-
-			CTime endTime = CTime::GetTickCount();
-			CString text;
-			mEditOutput.GetWindowTextW(text);
-			text += "进行缩放处理。";
-			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-			CString timeStr;
-			timeStr.Format(_T("线程：%d个，耗时：%dms。\r\n>"), m_nThreadNum, (endTime - startTime));
-			text += timeStr;
-			mEditOutput.SetWindowTextW(text);
-			
-		}
-	}
-	return 0;
-}
 
 BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_WM_SYSCOMMAND()
@@ -620,9 +624,9 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PROCESS, &CImgProcess1Dlg::OnBnClickedButtonProcess)
 
 	// 定义线程通信消息函数
+	ON_MESSAGE(WM_SCALE, &CImgProcess1Dlg::OnScaleThreadMsgReceived)
 	ON_MESSAGE(WM_NOISE, &CImgProcess1Dlg::OnNoiseThreadMsgReceived)
 	ON_MESSAGE(WM_FILTER, &CImgProcess1Dlg::OnFilterThreadMsgReceived)
-	ON_MESSAGE(WM_SCALE, &CImgProcess1Dlg::OnScaleThreadMsgReceived)
 END_MESSAGE_MAP()
 
 
@@ -690,6 +694,7 @@ void CImgProcess1Dlg::OnSysCommand(UINT nID, LPARAM lParam)
 	}
 }
 
+
 // 如果向对话框添加最小化按钮，则需要下面的代码
 //  来绘制该图标。  对于使用文档/视图模型的 MFC 应用程序，
 //  这将由框架自动完成。
@@ -716,39 +721,7 @@ void CImgProcess1Dlg::OnPaint()
 	else
 	{
 		CDialogEx::OnPaint();
-		if (m_pImgSrc != NULL) {
-			int picHeight = m_pImgSrc->GetHeight();
-			int picWidth = m_pImgSrc->GetWidth();
-			CRect picCtrlRect;
-			CRect displayRect;
-
-			// CDC————设备上下文对象
-			CDC* pDC = mPicCtrlLeft.GetDC();
-			// SetStretchBltMode函数，设置指定设备环境中的位图拉伸模式
-			SetStretchBltMode(pDC->m_hDC, STRETCH_HALFTONE);
-
-			// 窗口区分为 client 客户区域 和 非客户区
-			mPicCtrlLeft.GetClientRect(&picCtrlRect);
-			if (picHeight <= picCtrlRect.Height() && picWidth <= picCtrlRect.Width()) {
-				displayRect = CRect(picCtrlRect.TopLeft(), CSize(picWidth, picHeight));
-			}
-			else {
-				float xScale = (float)picCtrlRect.Width() / (float)picWidth;
-				float yScale = (float)picCtrlRect.Height() / (float)picHeight;
-				float scale = xScale <= yScale ? xScale : yScale;
-				displayRect = CRect(picCtrlRect.TopLeft(), CSize((int)picWidth * scale, (int)picHeight * scale));
-			}
-			// 从源矩形中复制一个位图到目标矩形，必要时按目标设备设置的模式进行图像的拉伸或压缩。
-			m_pImgSrc->StretchBlt(pDC->m_hDC, displayRect, SRCCOPY);
-
-			CString text;
-			mEditOutput.GetWindowTextW(text);
-			text += "成功输入图像。\r\n>";
-			mEditOutput.SetWindowTextW(text);
-
-			// CDC消耗很大，要及时释放
-			ReleaseDC(pDC);
-		}
+		Open(this);
 	}
 }
 
@@ -761,10 +734,10 @@ HCURSOR CImgProcess1Dlg::OnQueryDragIcon()
 
 
 
-
 void CImgProcess1Dlg::OnBnClickedButtonOpen()
 {
 	// TODO: 在此添加控件通知处理程序代码
+
 	TCHAR szFilter[] = _T("JPEG(*jpg)|*.jpg|*.bmp|TIFF(*.tif)|*.tif|All Files （*.*）|*.*||");
 	CString filePath("");
 
@@ -790,11 +763,18 @@ void CImgProcess1Dlg::OnBnClickedButtonOpen()
 		m_pImgSrc->Load(strFilePath);
 		m_pImgShow = new CImage();
 		m_pImgShow->Load(strFilePath);
+
+		Open(this);
+
+		CString text;
+		mEditOutput.GetWindowTextW(text);
+		text += "成功输入图像。\r\n>";
+		mEditOutput.SetWindowTextW(text);
+
 		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
 		this->Invalidate();
 	}
 }
-
 
 void CImgProcess1Dlg::OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult)
 {
@@ -804,7 +784,6 @@ void CImgProcess1Dlg::OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult)
 	pPages[curPage]->ShowWindow(SW_SHOW);
 	*pResult = 0;
 }
-
 
 void CImgProcess1Dlg::OnNMCustomdrawSlider(NMHDR* pNMHDR, LRESULT* pResult)
 {
@@ -817,8 +796,6 @@ void CImgProcess1Dlg::OnNMCustomdrawSlider(NMHDR* pNMHDR, LRESULT* pResult)
 	GetDlgItem(IDC_STATIC_THREADNUM)->SetWindowText(text);
 	*pResult = 0;
 }
-
-
 
 void CImgProcess1Dlg::OnBnClickedButtonProcess()
 {
@@ -834,10 +811,9 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 		mEditOutput.GetWindowTextW(text);
 		text += "正在处理……\r\n>";
 		mEditOutput.SetWindowTextW(text);
-		/*
-		// Invalidate————使整个窗口客户区无效, 并进行 更新 显示的函数
-		this->Invalidate();*/
 
+		this->Invalidate();
+		
 		startTime = CTime::GetTickCount();
 		switch (curPage) {
 		case 0:
@@ -860,3 +836,52 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 		}
 	}
 }
+
+
+/*
+void CImgProcess1Dlg::imageScale(float xscale, float yscale)
+{
+	int MaxColors = m_pImgShow->GetMaxColorTableEntries();
+	RGBQUAD* ColorTab;
+	ColorTab = new RGBQUAD[MaxColors];
+
+	CDC* pDCsrc, * pDCdrc;
+
+	int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
+	bool yes = m_pImgTemp->Create((int)xscale * m_pImgShow->GetWidth(), (int)xscale * m_pImgShow->GetHeight(), m_pImgShow->GetBPP(), alpha);
+
+	if (m_pImgShow->IsIndexed())
+	{
+		m_pImgShow->GetColorTable(0, MaxColors, ColorTab);
+		m_pImgTemp->SetColorTable(0, MaxColors, ColorTab);
+	}
+
+	pDCsrc = CDC::FromHandle(m_pImgShow->GetDC());
+	pDCdrc = CDC::FromHandle(m_pImgTemp->GetDC());
+	pDCdrc->BitBlt(0, 0, m_pImgTemp->GetWidth(), m_pImgTemp->GetHeight(), pDCsrc, 0, 0, SRCCOPY);
+	m_pImgShow->ReleaseDC();
+	m_pImgTemp->ReleaseDC();
+	delete ColorTab;
+}
+
+
+void CImgProcess1Dlg::threadDraw(DrawPara* p)
+{
+	CRect rect;
+	GetClientRect(&rect);
+	CDC     memDC;             // 用于缓冲绘图的内存画笔
+	CBitmap memBitmap;         // 用于缓冲绘图的内存画布
+	memDC.CreateCompatibleDC(p->pDC);  // 创建与原画笔兼容的画笔
+	memBitmap.CreateCompatibleBitmap(p->pDC, p->width, p->height);  // 创建与原位图兼容的内存画布
+	memDC.SelectObject(&memBitmap);      // 创建画笔与画布的关联
+	memDC.FillSolidRect(rect, p->pDC->GetBkColor());
+	p->pDC->SetStretchBltMode(HALFTONE);
+	// 将pImgSrc的内容缩放画到内存画布中
+	p->pImgSrc->StretchBlt(memDC.m_hDC, 0, 0, p->width, p->height);
+
+	// 将已画好的画布复制到真正的缓冲区中
+	p->pDC->BitBlt(p->oriX, p->oriY, p->width, p->height, &memDC, 0, 0, SRCCOPY);
+	memBitmap.DeleteObject();
+	memDC.DeleteDC();
+}
+*/

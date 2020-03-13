@@ -41,9 +41,11 @@ public:
 
 	// 辅助函数
 	void setTab();
+	void Open(void* p);
 	static UINT Update(void* p);
 	void imageCopy(CImage* pImgSrc, CImage* pImgDrt);
-	void threadDraw(DrawPara* p);
+	//void imageScale(float xscale, float yscale);
+	//void threadDraw(DrawPara* p);
 
 	void scale();
 	void scale_WIN(float x, float y);
@@ -65,7 +67,7 @@ protected:
 	HICON m_hIcon;
 	CImage* m_pImgSrc;
 	CImage* m_pImgShow;
-	CImage* m_pImgScale;
+	CImage* m_pImgTemp;
 	int m_nThreadNum;
 	ThreadParam* m_pThreadParam;
 	CTime startTime;
