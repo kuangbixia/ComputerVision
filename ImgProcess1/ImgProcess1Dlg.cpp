@@ -75,27 +75,15 @@ void CImgProcess1Dlg::DoDataExchange(CDataExchange* pDX)
 void CImgProcess1Dlg::setTab()
 {
 	// Tab分页
+	mTabControl.InsertItem(0, _T("缩放"));
+	mTabControl.InsertItem(1, _T("傅里叶变换"));
+	mTabControl.InsertItem(2, _T("噪声"));
+	mTabControl.InsertItem(3, _T("滤波"));
+	mTabControl.InsertItem(4, _T("双边滤波"));
 
-	TCITEM tcItem[TABNUM];
-	int i;
-	for (i = 0; i < TABNUM; i++) {
-		tcItem[i].mask = TCIF_TEXT;
-	}
-
-	i = 0;
-	tcItem[i++].pszText = _T("三阶插值");
-	tcItem[i++].pszText = _T("傅里叶变换");
-	tcItem[i++].pszText = _T("噪声");
-	tcItem[i++].pszText = _T("滤波");
-	tcItem[i++].pszText = _T("双边滤波");
-
-	for (i = 0; i < TABNUM; i++) {
-		mTabControl.InsertItem(i, &tcItem[i]);
-	}
 
 	// 把新建对话框添加到tab control
 
-	i = 0;
 	// 分页的显示范围
 	CRect tabRc;
 	mTabControl.GetClientRect(tabRc);
@@ -103,32 +91,24 @@ void CImgProcess1Dlg::setTab()
 
 	m_pageInterpolation.Create(IDD_INTERPOLATION, &mTabControl);
 	m_pageInterpolation.MoveWindow(&tabRc);
-	pPages[i++] = &m_pageInterpolation;
+	pPages[0] = &m_pageInterpolation;
 	m_pageFourier.Create(IDD_FOURIER, &mTabControl);
 	m_pageFourier.MoveWindow(&tabRc);
-	pPages[i++] = &m_pageFourier;
+	pPages[1] = &m_pageFourier;
 	m_pageNoise.Create(IDD_NOISE, &mTabControl);
 	m_pageNoise.MoveWindow(&tabRc);
-	m_pageNoise.mNoiseType.InsertString(0, _T("椒盐噪声"));
-	m_pageNoise.mNoiseType.InsertString(1, _T("高斯噪声"));
-	m_pageNoise.mNoiseType.SetCurSel(0);
-	pPages[i++] = &m_pageNoise;
+	pPages[2] = &m_pageNoise;
 	m_pageFilter.Create(IDD_FILTER, &mTabControl);
 	m_pageFilter.MoveWindow(&tabRc);
-	m_pageFilter.mFilterType.InsertString(0, _T("自适应中值滤波"));
-	m_pageFilter.mFilterType.InsertString(1, _T("平滑线性滤波"));
-	m_pageFilter.mFilterType.InsertString(2, _T("高斯滤波"));
-	m_pageFilter.mFilterType.InsertString(3, _T("维纳滤波"));
-	m_pageFilter.mFilterType.SetCurSel(0);
-	pPages[i++] = &m_pageFilter;
+	pPages[3] = &m_pageFilter;
 	m_pageBilateral.Create(IDD_BILATERAL, &mTabControl);
 	m_pageBilateral.MoveWindow(&tabRc);
-	pPages[i++] = &m_pageBilateral;
+	pPages[4] = &m_pageBilateral;
 
 	// 初始化tab control显示的窗口
-	for (i = 0; i < TABNUM; i++) {
+	for (int i = 0; i < TABNUM; i++) {
 		if (i == curPage) {
-			pPages[i++]->ShowWindow(SW_SHOW);
+			pPages[i]->ShowWindow(SW_SHOW);
 		}
 		else {
 			pPages[i]->ShowWindow(SW_HIDE);
@@ -237,252 +217,6 @@ void CImgProcess1Dlg::imageCopy(CImage* pImgSrc, CImage* pImgDrt)
 	delete ColorTab;
 }
 
-// scale
-
-void CImgProcess1Dlg::scale()
-{
-	float x = 0.5, y = 0.5;
-
-	if (m_pImgTemp != NULL) {
-		m_pImgTemp->Destroy();
-		delete m_pImgTemp;
-		m_pImgTemp = NULL;
-	}
-	m_pImgTemp = new CImage();
-
-	//int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
-	//bool createYes = m_pImgTemp->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), alpha);
-	m_pImgTemp->Load(strFilePath);
-
-	int thread = mThreadType.GetCurSel();
-	switch (thread) {
-	case 0: // WIN多线程
-	{
-		scale_WIN(x, y);
-		break;
-	}
-	case 1: // OpenMP
-	{
-		scale_OPENMP(x, y);
-		break;
-	}
-	}
-}
-
-void CImgProcess1Dlg::scale_WIN(float x, float y)
-{
-	int width = (x < 1 ? x : 1) * m_pImgTemp->GetWidth();
-	int height = (y < 1 ? y : 1) * m_pImgTemp->GetHeight();
-
-	// 每个线程处理的像素数
-	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
-	int subLength = width * height / m_nThreadNum;
-
-
-	for (int i = 0; i < m_nThreadNum; ++i)
-	{
-		m_pThreadParam[i].img = m_pImgTemp;
-		m_pThreadParam[i].src = m_pImgShow;
-		m_pThreadParam[i].xscale = x;
-		m_pThreadParam[i].yscale = y;
-		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
-
-		// windows MFC 创建线程
-		AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, &m_pThreadParam[i]);
-	}
-}
-
-void CImgProcess1Dlg::scale_OPENMP(float x, float y)
-{
-	int width = (x < 1 ? x : 1) * m_pImgTemp->GetWidth();
-	int height = (y < 1 ? y : 1) * m_pImgTemp->GetHeight();
-
-	// 每个线程处理的像素数
-	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
-	int subLength = width * height / m_nThreadNum;
-
-	// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
-	for (int i = 0; i < m_nThreadNum; i++) {
-		m_pThreadParam[i].img = m_pImgTemp;
-		m_pThreadParam[i].src = m_pImgShow;
-		m_pThreadParam[i].xscale = x;
-		m_pThreadParam[i].yscale = y;
-		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
-		ImageProcess::cubicScale(&m_pThreadParam[i]);
-	}
-}
-
-
-// add noise
-
-void CImgProcess1Dlg::addNoise()
-{
-	int thread = mThreadType.GetCurSel();
-
-	switch (thread) {
-	case 0: // WIN多线程
-	{
-		addNoise_WIN();
-		break;
-	}
-	case 1: // OpenMP
-	{
-		addNoise_OPENMP();
-		break;
-	}
-	}
-}
-
-void CImgProcess1Dlg::addNoise_WIN()
-{
-	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
-	for (int i = 0; i < m_nThreadNum; ++i)
-	{
-		m_pThreadParam[i].img = m_pImgShow;
-		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
-		// windows MFC 创建线程
-		switch (m_pageNoise.mNoiseType.GetCurSel()) {
-		case 0: // 椒盐噪声
-		{
-			AfxBeginThread((AFX_THREADPROC)&ImageProcess::saltNoise, &m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:高斯噪声
-		{
-			break;
-		}
-		}
-	}
-}
-
-void CImgProcess1Dlg::addNoise_OPENMP()
-{
-	// 每个线程处理的像素数
-	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
-
-	// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
-	for (int i = 0; i < m_nThreadNum; i++) {
-		m_pThreadParam[i].img = m_pImgShow;
-		m_pThreadParam[i].startIndex = i * subLength;
-		if (i != m_nThreadNum - 1) {
-			m_pThreadParam[i].endIndex = (i + 1) * subLength - 1;
-		}
-		else {
-			m_pThreadParam[i].endIndex = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
-		}
-		switch (m_pageNoise.mNoiseType.GetCurSel()) {
-		case 0: // 椒盐噪声
-		{
-			ImageProcess::saltNoise(&m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:高斯噪声
-		{
-			break;
-		}
-		}
-	}
-}
-
-
-// filter
-
-void CImgProcess1Dlg::filter()
-{
-	int thread = mThreadType.GetCurSel();
-
-	switch (thread) {
-	case 0: // WIN多线程
-	{
-		filter_WIN();
-		break;
-	}
-	case 1: // OpenMP
-	{
-		filter_OPENMP();
-		break;
-	}
-	}
-
-}
-
-void CImgProcess1Dlg::filter_WIN()
-{
-	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
-	int h = m_pImgShow->GetHeight() / m_nThreadNum;
-	int w = m_pImgShow->GetWidth() / m_nThreadNum;
-	for (int i = 0; i < m_nThreadNum; ++i)
-	{
-		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
-		m_pThreadParam[i].maxSpan = MAX_SPAN;
-		m_pThreadParam[i].img = m_pImgShow;
-		// windows MFC 创建线程
-		switch (m_pageFilter.mFilterType.GetCurSel()) {
-		case 0: // 自适应中值滤波
-		{
-			AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:平滑线性滤波
-		{
-			break;
-		}
-		case 2: // todo:高斯滤波
-		{
-			break;
-		}
-		case 3: // todo:维纳滤波
-		{
-			break;
-		}
-		}
-	}
-}
-
-void CImgProcess1Dlg::filter_OPENMP()
-{
-	// 每个线程处理的像素数
-	int subLength = m_pImgShow->GetWidth() * m_pImgShow->GetHeight() / m_nThreadNum;
-
-	// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
-	for (int i = 0; i < m_nThreadNum; ++i)
-	{
-		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgShow->GetWidth() * m_pImgShow->GetHeight() - 1;
-		m_pThreadParam[i].maxSpan = MAX_SPAN;
-		m_pThreadParam[i].img = m_pImgShow;
-		switch (m_pageFilter.mFilterType.GetCurSel()) {
-		case 0: // 自适应中值滤波
-		{
-			ImageProcess::medianFilter(&m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:平滑线性滤波
-		{
-			break;
-		}
-		case 2: // todo:高斯滤波
-		{
-			break;
-		}
-		case 3: // todo:维纳滤波
-		{
-			break;
-		}
-		}
-	}
-}
-
 
 // 消息接收
 
@@ -537,7 +271,7 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			noiseThreadCount = 0;
 
 			if (++tempProcessCount < circulation)
-				addNoise();
+				m_pageNoise.addNoise(this);
 			else // 循环结束
 			{
 				CTime endTime = CTime::GetTickCount();
@@ -578,7 +312,7 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			filterThreadCount = 0;
 
 			if (++tempProcessCount < circulation)
-				filter();
+				m_pageFilter.filter(this);
 			else // 循环结束
 			{
 				CTime endTime = CTime::GetTickCount();
@@ -682,7 +416,7 @@ BOOL CImgProcess1Dlg::OnInitDialog()
 
 	CSliderCtrl* slider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER);
 	slider->SetRange(1, MAX_THREAD, TRUE);
-	slider->SetPos(1);
+	slider->SetPos(MAX_THREAD);
 
 	AfxBeginThread((AFX_THREADPROC)&CImgProcess1Dlg::Update, this);
 
@@ -825,18 +559,18 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 		startTime = CTime::GetTickCount();
 		switch (curPage) {
 		case 0:
-			scale();
+			m_pageInterpolation.scale(this);
 			break;
 		case 1:
 			break;
 		case 2:
 		{
-			addNoise();
+			m_pageNoise.addNoise(this);
 			break;
 		}
 		case 3:
 		{
-			filter();
+			m_pageFilter.filter(this);
 			break;
 		}
 		case 4:

@@ -47,16 +47,6 @@ public:
 	//void imageScale(float xscale, float yscale);
 	//void threadDraw(DrawPara* p);
 
-	void scale();
-	void scale_WIN(float x, float y);
-	void scale_OPENMP(float x, float y);
-	void addNoise();
-	void addNoise_WIN();
-	void addNoise_OPENMP();
-	void filter();
-	void filter_WIN();
-	void filter_OPENMP();
-
 	// 线程通信消息函数
 	afx_msg LRESULT OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam);
@@ -65,13 +55,8 @@ public:
 // 实现
 protected:
 	HICON m_hIcon;
-	CImage* m_pImgSrc;
-	CImage* m_pImgShow;
-	CImage* m_pImgTemp;
-	int m_nThreadNum;
-	ThreadParam* m_pThreadParam;
+	
 	CTime startTime;
-
 
 	int curPage;
 	CInterpolationDlg m_pageInterpolation;
@@ -89,6 +74,11 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	CImage* m_pImgSrc;
+	CImage* m_pImgShow;
+	CImage* m_pImgTemp;
+	int m_nThreadNum;
+	ThreadParam* m_pThreadParam;
 	afx_msg void OnBnClickedButtonOpen();
 	CEdit mEditInfo;
 	CString strFilePath;
