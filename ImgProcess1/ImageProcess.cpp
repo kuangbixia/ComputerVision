@@ -62,8 +62,10 @@ UINT ImageProcess::cubicScale(LPVOID p)
 	ThreadParam* param = (ThreadParam*)p;
 
 	// img data
-	int imgWidth = param->img->GetWidth();
-	int imgHeight = param->img->GetHeight();
+	//int imgWidth = param->img->GetWidth();
+	//int imgHeight = param->img->GetHeight();
+	int imgWidth = (int)(param->xscale * param->src->GetWidth());
+	int imgHeight = (int)(param->yscale * param->src->GetHeight());
 	
 	int startIndex = param->startIndex;
 	int endIndex = param->endIndex;
@@ -82,8 +84,8 @@ UINT ImageProcess::cubicScale(LPVOID p)
 		int ix = i % imgWidth;
 		int iy = i / imgWidth;
 
-		double x = ix / ((double)imgWidth / srcWidth);
-		double y = iy / ((double)imgHeight / srcHeight);
+		double x = ix / (double)param->xscale;
+		double y = iy / (double)param->yscale;
 		int fx = (int)x, fy = (int)y;
 		fx = fx < 0 ? 0 : fx;
 		fx = fx > srcWidth - 1 ? srcWidth - 1 : fx;
@@ -105,7 +107,7 @@ UINT ImageProcess::cubicScale(LPVOID p)
 
 		// Get 4*4 pixels
 		byte* p[4][4];
-#define FILLPX(x, y, i, j) p[i][j]=pSrcData + srcPit * fy + fx * srcBitCount
+#define FILLPX(x, y, i, j) p[i][j]=(byte*)pSrcData + srcPit * fy + fx * srcBitCount
 		FILLPX(fx - 1, fy - 1, 0, 0);
 		FILLPX(fx - 1, fy + 0, 0, 1);
 		FILLPX(fx - 1, fy + 1, 0, 2);
@@ -127,23 +129,29 @@ UINT ImageProcess::cubicScale(LPVOID p)
 		// 计算最终像素值
 		/*for (int i = 0; i < 3; ++i)
 			rgb[i] = std::clamp(rgb[i], 0.0, 255.0);*/
+
 		byte* pImgData = (byte*)param->img->GetBits();
 		// 每个像素的字节数
 		int imgBitCount = param->img->GetBPP() / 8;
 		// GetPitch()图像的间距
 		int imgPit = param->img->GetPitch();
 
+		double rgb[3] = { 0.0 };
 		for (int m = 0; m < 4; ++m) {
 			for (int n = 0; n < 4; ++n) {
-				if (imgBitCount == 1) {
-					*(pImgData + imgPit * iy + ix * imgBitCount) = p[m][n][0] * wx[m] * wy[n];
-				}
-				else {
-					*(pImgData + imgPit * iy + ix * imgBitCount) = p[m][n][0] * wx[m] * wy[n];
-					*(pImgData + imgPit * iy + ix * imgBitCount + 1) = p[m][n][1] * wx[m] * wy[n];
-					*(pImgData + imgPit * iy + ix * imgBitCount + 2) = p[m][n][2] * wx[m] * wy[n];
-				}
+				rgb[0] += p[m][n][0] * wx[m] * wy[n];
+				rgb[1] += p[m][n][1] * wx[m] * wy[n];
+				rgb[2] += p[m][n][2] * wx[m] * wy[n];
 			}
+		}
+
+		if (imgBitCount == 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+		}
+		else {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = rgb[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = rgb[2];
 		}
 	}
 	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_SCALE, 1, NULL);

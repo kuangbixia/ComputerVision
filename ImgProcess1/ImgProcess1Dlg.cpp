@@ -250,9 +250,9 @@ void CImgProcess1Dlg::scale()
 	}
 	m_pImgTemp = new CImage();
 
-	int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
-	bool yes = m_pImgTemp->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), alpha);
-
+	//int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
+	//bool createYes = m_pImgTemp->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), alpha);
+	m_pImgTemp->Load(strFilePath);
 
 	int thread = mThreadType.GetCurSel();
 	switch (thread) {
@@ -271,8 +271,13 @@ void CImgProcess1Dlg::scale()
 
 void CImgProcess1Dlg::scale_WIN(float x, float y)
 {
+	int width = (x < 1 ? x : 1) * m_pImgTemp->GetWidth();
+	int height = (y < 1 ? y : 1) * m_pImgTemp->GetHeight();
+
 	// 每个线程处理的像素数
-	int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
+	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
+	int subLength = width * height / m_nThreadNum;
+
 
 	for (int i = 0; i < m_nThreadNum; ++i)
 	{
@@ -281,8 +286,7 @@ void CImgProcess1Dlg::scale_WIN(float x, float y)
 		m_pThreadParam[i].xscale = x;
 		m_pThreadParam[i].yscale = y;
 		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() - 1;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
 
 		// windows MFC 创建线程
 		AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, &m_pThreadParam[i]);
@@ -291,8 +295,12 @@ void CImgProcess1Dlg::scale_WIN(float x, float y)
 
 void CImgProcess1Dlg::scale_OPENMP(float x, float y)
 {
+	int width = (x < 1 ? x : 1) * m_pImgTemp->GetWidth();
+	int height = (y < 1 ? y : 1) * m_pImgTemp->GetHeight();
+
 	// 每个线程处理的像素数
-	int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
+	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
+	int subLength = width * height / m_nThreadNum;
 
 	// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(m_nThreadNum)
@@ -302,8 +310,7 @@ void CImgProcess1Dlg::scale_OPENMP(float x, float y)
 		m_pThreadParam[i].xscale = x;
 		m_pThreadParam[i].yscale = y;
 		m_pThreadParam[i].startIndex = i * subLength;
-		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() - 1;
+		m_pThreadParam[i].endIndex = i != m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
 		ImageProcess::cubicScale(&m_pThreadParam[i]);
 	}
 }
@@ -491,6 +498,7 @@ LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			scaleThreadCount = 0;
 
 			imageCopy(m_pImgTemp, m_pImgShow);
+
 
 			CString text2;
 			mEditOutput.GetWindowTextW(text2);
@@ -745,7 +753,7 @@ void CImgProcess1Dlg::OnBnClickedButtonOpen()
 	if (fileOpenDialog.DoModal() == IDOK)
 	{
 		VERIFY(filePath = fileOpenDialog.GetPathName());
-		CString strFilePath(filePath);
+		strFilePath = filePath;
 		mEditInfo.SetWindowTextW(strFilePath);
 
 		// 清除上一张图片，释放内存

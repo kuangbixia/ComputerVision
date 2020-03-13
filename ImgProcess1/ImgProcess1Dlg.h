@@ -91,6 +91,7 @@ protected:
 public:
 	afx_msg void OnBnClickedButtonOpen();
 	CEdit mEditInfo;
+	CString strFilePath;
 	CTabCtrl mTabControl;
 	CStatic mPicCtrlLeft;
 	CStatic mPicCtrlRight;
