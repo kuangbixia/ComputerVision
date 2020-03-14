@@ -32,87 +32,108 @@ void CFilterDlg::filter(void* p)
 	switch (thread) {
 	case 0: // WIN多线程
 	{
-		filter_WIN();
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			// windows MFC 创建线程
+			switch (mFilterType.GetCurSel()) {
+			case 0: // 自适应中值滤波
+			{
+				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+				AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
+				break;
+			}
+			case 1: // 加权均值线性滤波
+			{
+				if (dlg->m_pImgTemp != NULL) {
+					dlg->m_pImgTemp->Destroy();
+					delete dlg->m_pImgTemp;
+					dlg->m_pImgTemp = NULL;
+				}
+				dlg->m_pImgTemp = new CImage();
+				dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+				AfxBeginThread((AFX_THREADPROC)&ImageProcess::meanFilter, &dlg->m_pThreadParam[i]);
+				break;
+			}
+			case 2: // todo:高斯滤波
+			{
+				break;
+			}
+			case 3: // todo:维纳滤波
+			{
+				break;
+			}
+			}
+		}
 		break;
 	}
 	case 1: // OpenMP
 	{
-		filter_OPENMP();
+		// 把for循环分给各个线程执行！！和windows多线程不一样
+#pragma omp parallel for num_threads(m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			switch (mFilterType.GetCurSel()) {
+			case 0: // 自适应中值滤波
+			{
+				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+				ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
+				break;
+			}
+			case 1: // 加权均值滤波
+			{
+				if (dlg->m_pImgTemp != NULL) {
+					dlg->m_pImgTemp->Destroy();
+					delete dlg->m_pImgTemp;
+					dlg->m_pImgTemp = NULL;
+				}
+				dlg->m_pImgTemp = new CImage();
+				dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+				ImageProcess::meanFilter(&dlg->m_pThreadParam[i]);
+				break;
+			}
+			case 2: // todo:高斯滤波
+			{
+				break;
+			}
+			case 3: // todo:维纳滤波
+			{
+				break;
+			}
+			}
+		}
 		break;
 	}
 	}
 }
 
-void CFilterDlg::filter_WIN()
-{
-	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
-	int h = dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
-	int w = dlg->m_pImgShow->GetWidth() / dlg->m_nThreadNum;
-	for (int i = 0; i < dlg->m_nThreadNum; ++i)
-	{
-		dlg->m_pThreadParam[i].startIndex = i * subLength;
-		dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
-		dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
-		dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
-		// windows MFC 创建线程
-		switch (mFilterType.GetCurSel()) {
-		case 0: // 自适应中值滤波
-		{
-			AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:平滑线性滤波
-		{
-			break;
-		}
-		case 2: // todo:高斯滤波
-		{
-			break;
-		}
-		case 3: // todo:维纳滤波
-		{
-			break;
-		}
-		}
-	}
-}
-
-void CFilterDlg::filter_OPENMP()
-{
-	// 每个线程处理的像素数
-	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
-
-	// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
-	for (int i = 0; i < dlg->m_nThreadNum; ++i)
-	{
-		dlg->m_pThreadParam[i].startIndex = i * subLength;
-		dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-			(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
-		dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
-		dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
-		switch (mFilterType.GetCurSel()) {
-		case 0: // 自适应中值滤波
-		{
-			ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
-			break;
-		}
-		case 1: // todo:平滑线性滤波
-		{
-			break;
-		}
-		case 2: // todo:高斯滤波
-		{
-			break;
-		}
-		case 3: // todo:维纳滤波
-		{
-			break;
-		}
-		}
-	}
-}
 
 void CFilterDlg::DoDataExchange(CDataExchange* pDX)
 {
@@ -124,7 +145,7 @@ BOOL CFilterDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
 	mFilterType.InsertString(0, _T("自适应中值滤波"));
-	mFilterType.InsertString(1, _T("平滑线性滤波"));
+	mFilterType.InsertString(1, _T("加权均值滤波"));
 	mFilterType.InsertString(2, _T("高斯滤波"));
 	mFilterType.InsertString(3, _T("维纳滤波"));
 	mFilterType.SetCurSel(0);

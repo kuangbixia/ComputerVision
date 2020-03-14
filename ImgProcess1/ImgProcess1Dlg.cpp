@@ -317,7 +317,7 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				}
 				case 1: // todo:平滑线性滤波
 				{
-					text += "进行平滑线性滤波。";
+					text += "进行加权均值滤波。";
 					break;
 				}
 				case 2: // todo:高斯滤波

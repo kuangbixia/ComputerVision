@@ -133,14 +133,74 @@ UINT ImageProcess::medianFilter(LPVOID  p)
 
 	}
 
-
-
 	delete[]pixel;
 	delete[]pixelR;
 	delete[]pixelG;
 	delete[]pixelB;
 
 	// 传递消息
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
+	return 0;
+}
+
+UINT ImageProcess::meanFilter(LPVOID  p) {
+	ThreadParam* param = (ThreadParam*)p;
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+
+	int startIndex = param->startIndex;
+	int endIndex = param->endIndex;
+
+	// 3*3 模板
+	const int TEMPLATE_SIZE = 3 * 3;
+	for (int i = startIndex; i <= endIndex; ++i){
+		int ix = i % imgWidth;
+		int iy = i / imgWidth;
+
+		if (ix - 1 < 0 || iy - 1 < 0 || ix + 1 > imgWidth - 1 || iy + 1 > imgHeight - 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = *(pSrcData + srcPit * iy + ix * srcBitCount);
+			continue;
+		}
+
+		double rgb[3] = {};
+#define ACCUMULATE(_x, _y) { \
+		auto pixel=(byte*)(pSrcData + srcPit * _y + _x * srcBitCount); \
+		rgb[0] += pixel[0]; \
+		rgb[1] += pixel[1]; \
+		rgb[2] += pixel[2]; \
+		}
+		ACCUMULATE(ix - 1, iy - 1); 
+		ACCUMULATE(ix, iy - 1); 
+		ACCUMULATE(ix + 1, iy - 1);
+		ACCUMULATE(ix - 1, iy);     
+		ACCUMULATE(ix, iy);    
+		ACCUMULATE(ix + 1, iy);
+		ACCUMULATE(ix - 1, iy + 1); 
+		ACCUMULATE(ix, iy + 1); 
+		ACCUMULATE(ix + 1, iy - 1);
+#undef ACCUMULATE
+
+		if (imgBitCount == 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0] / TEMPLATE_SIZE);
+		}
+		else {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0] / TEMPLATE_SIZE);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)(rgb[1] / TEMPLATE_SIZE);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)(rgb[2] / TEMPLATE_SIZE);
+		}
+	}
 	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
 	return 0;
 }

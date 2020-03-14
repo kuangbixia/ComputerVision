@@ -12,8 +12,6 @@ public:
 	virtual ~CFilterDlg();
 
 	void filter(void* p);
-	void filter_WIN();
-	void filter_OPENMP();
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME

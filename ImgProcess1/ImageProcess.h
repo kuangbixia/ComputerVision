@@ -30,4 +30,5 @@ public:
 	static UINT saltNoise(LPVOID P);
 	static UINT gaussianNoise(LPVOID p);
 	static UINT medianFilter(LPVOID P);
+	static UINT meanFilter(LPVOID p);
 };
