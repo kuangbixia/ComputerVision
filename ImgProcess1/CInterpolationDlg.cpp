@@ -28,6 +28,7 @@ void CInterpolationDlg::DoDataExchange(CDataExchange* pDX)
 	DDX_Control(pDX, IDC_COMBO_SorR, mScaleOrRotate);
 	DDX_Control(pDX, IDC_EDIT_XSCALE, mEditXscale);
 	DDX_Control(pDX, IDC_EDIT_YSCALE, mEditYscale);
+	DDX_Control(pDX, IDC_EDIT_ANGLE, mEditAngle);
 }
 
 BOOL CInterpolationDlg::OnInitDialog()
@@ -41,16 +42,19 @@ BOOL CInterpolationDlg::OnInitDialog()
 
 void CInterpolationDlg::scale(void* p)
 {
+	dlg = new CImgProcess1Dlg();
+	dlg = (CImgProcess1Dlg*)p;
+
 	CString xText, yText;
 	mEditXscale.GetWindowTextW(xText);
 	mEditYscale.GetWindowTextW(yText);
-	if (xText.IsEmpty()) {
+	if (xText.IsEmpty()||yText.IsEmpty()) {
+		dlg->printLine(CString("还没有输入缩放系数。"));
+		return;
 	}
 	float x = _ttof(xText);
 	float y = _ttof(yText);
 
-	dlg = new CImgProcess1Dlg();
-	dlg = (CImgProcess1Dlg*)p;
 
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
@@ -58,74 +62,111 @@ void CInterpolationDlg::scale(void* p)
 		dlg->m_pImgTemp = NULL;
 	}
 	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
 
-	/*int alpha = m_pImgShow->GetBPP() == 32 ? 1 : 0;
-	bool createYes = m_pImgTemp->Create(int(x * m_pImgShow->GetWidth()), int(y * m_pImgShow->GetHeight()), m_pImgShow->GetBPP(), alpha);
-	m_pImgShow->StretchBlt(m_pImgTemp->GetDC(), CRect(0, 0, m_pImgTemp->GetWidth(), m_pImgTemp->GetHeight()), CRect(0, 0, m_pImgTemp->GetWidth(), m_pImgTemp->GetHeight()));
-	m_pImgTemp->ReleaseDC();*/
 
-	dlg->m_pImgTemp->Load(dlg->strFilePath);
+	int width = (x < 1 ? x : 1) * dlg->m_pImgTemp->GetWidth();
+	int height = (y < 1 ? y : 1) * dlg->m_pImgTemp->GetHeight();
+	// 每个线程处理的像素数
+	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
+	int subLength = width * height / dlg->m_nThreadNum;
 
 	int thread = dlg->mThreadType.GetCurSel();
 	switch (thread) {
 	case 0: // WIN多线程
 	{
-		scale_WIN(x, y);
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].xscale = x;
+			dlg->m_pThreadParam[i].yscale = y;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
+
+			// windows MFC 创建线程
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, &dlg->m_pThreadParam[i]);
+		}
 		break;
 	}
 	case 1: // OpenMP
 	{
-		scale_OPENMP(x, y);
+		// 把for循环分给各个线程执行！！和windows多线程不一样
+#pragma omp parallel for num_threads(m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; i++) {
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].xscale = x;
+			dlg->m_pThreadParam[i].yscale = y;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
+			ImageProcess::cubicScale(&dlg->m_pThreadParam[i]);
+		}
 		break;
 	}
 	}
 }
 
-void CInterpolationDlg::scale_WIN(float x, float y)
+void CInterpolationDlg::rotate(void* p)
 {
-	int width = (x < 1 ? x : 1) * dlg->m_pImgTemp->GetWidth();
-	int height = (y < 1 ? y : 1) * dlg->m_pImgTemp->GetHeight();
+	dlg = new CImgProcess1Dlg();
+	dlg = (CImgProcess1Dlg*)p;
+	CString aText;
+	mEditAngle.GetWindowTextW(aText);
+	if (aText.IsEmpty()) {
+		dlg->printLine(CString("还没输入旋转角度。"));
+		return;
+	}
+	float alpha = _ttof(aText);
+	alpha = alpha * acos(-1) / 180; // 转换弧度制
 
+	if (dlg->m_pImgTemp != NULL) {
+		dlg->m_pImgTemp->Destroy();
+		delete dlg->m_pImgTemp;
+		dlg->m_pImgTemp = NULL;
+	}
+	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+	int width = dlg->m_pImgTemp->GetWidth();
+	int height = dlg->m_pImgTemp->GetHeight();
 	// 每个线程处理的像素数
-	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
 	int subLength = width * height / dlg->m_nThreadNum;
 
-
-	for (int i = 0; i < dlg->m_nThreadNum; ++i)
+	int thread = dlg->mThreadType.GetCurSel();
+	switch (thread) {
+	case 0: // WIN多线程
 	{
-		dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-		dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-		dlg->m_pThreadParam[i].xscale = x;
-		dlg->m_pThreadParam[i].yscale = y;
-		dlg->m_pThreadParam[i].startIndex = i * subLength;
-		dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].alpha = alpha;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
 
-		// windows MFC 创建线程
-		AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicScale, &dlg->m_pThreadParam[i]);
+			// windows MFC 创建线程
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::cubicRotate, &dlg->m_pThreadParam[i]);
+		}
+		break;
 	}
-}
-
-void CInterpolationDlg::scale_OPENMP(float x, float y)
-{
-	int width = (x < 1 ? x : 1) * dlg->m_pImgTemp->GetWidth();
-	int height = (y < 1 ? y : 1) * dlg->m_pImgTemp->GetHeight();
-
-	// 每个线程处理的像素数
-	//int subLength = m_pImgTemp->GetWidth() * m_pImgTemp->GetHeight() / m_nThreadNum;
-	int subLength = width * height / dlg->m_nThreadNum;
-
-	// 把for循环分给各个线程执行！！和windows多线程不一样
+	case 1: // OpenMP
+	{
+		// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(m_nThreadNum)
-	for (int i = 0; i < dlg->m_nThreadNum; i++) {
-		dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-		dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-		dlg->m_pThreadParam[i].xscale = x;
-		dlg->m_pThreadParam[i].yscale = y;
-		dlg->m_pThreadParam[i].startIndex = i * subLength;
-		dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
-		ImageProcess::cubicScale(&dlg->m_pThreadParam[i]);
+		for (int i = 0; i < dlg->m_nThreadNum; i++) {
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].alpha = alpha;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ? (i + 1) * subLength - 1 : width * height - 1;
+			ImageProcess::cubicRotate(&dlg->m_pThreadParam[i]);
+		}
+		break;
+	}
 	}
 }
+
 
 
 BEGIN_MESSAGE_MAP(CInterpolationDlg, CDialogEx)

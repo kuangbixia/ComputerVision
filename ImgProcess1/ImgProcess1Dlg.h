@@ -43,14 +43,13 @@ public:
 	void setTab();
 	void Open(void* p);
 	static UINT Update(void* p);
-	void imageCopy(CImage* pImgSrc, CImage* pImgDrt);
 	//void imageScale(float xscale, float yscale);
 	//void threadDraw(DrawPara* p);
 
 	// 线程通信消息函数
 	afx_msg LRESULT OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam);
-	afx_msg LRESULT OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 
 // 实现
 protected:
@@ -88,6 +87,8 @@ public:
 	CComboBox mThreadType;
 
 	void printLine(CString text);
+	void imageCopy(CImage* pImgSrc, CImage* pImgDrt);
+
 
 	afx_msg void OnBnClickedButtonOpen();
 	afx_msg void OnTcnSelchangeTab(NMHDR* pNMHDR, LRESULT* pResult);

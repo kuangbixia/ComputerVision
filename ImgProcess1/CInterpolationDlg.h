@@ -12,8 +12,7 @@ public:
 	virtual ~CInterpolationDlg();
 
 	void scale(void* p);
-	void scale_WIN(float x, float y);
-	void scale_OPENMP(float x, float y);
+	void rotate(void* p);
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -31,4 +30,5 @@ public:
 	CComboBox mScaleOrRotate;
 	CEdit mEditXscale;
 	CEdit mEditYscale;
+	CEdit mEditAngle;
 };

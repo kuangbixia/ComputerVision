@@ -220,7 +220,7 @@ void CImgProcess1Dlg::imageCopy(CImage* pImgSrc, CImage* pImgDrt)
 
 // 消息接收
 
-LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 {
 	static int scaleThreadCount = 0;
 
@@ -234,7 +234,7 @@ LRESULT CImgProcess1Dlg::OnScaleThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 			imageCopy(m_pImgTemp, m_pImgShow);
 
 			CTime endTime = CTime::GetTickCount();
-			CString text("进行缩放处理。");
+			CString text(m_pageInterpolation.mScaleOrRotate.GetCurSel() == 0 ? "进行缩放处理。" : "进行旋转处理");
 			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 			CString timeStr;
 			timeStr.Format(_T("线程：%d个，耗时：%ds。"), m_nThreadNum, (endTime - startTime));
@@ -353,7 +353,7 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_BN_CLICKED(IDC_BUTTON_PROCESS, &CImgProcess1Dlg::OnBnClickedButtonProcess)
 
 	// 定义线程通信消息函数
-	ON_MESSAGE(WM_SCALE, &CImgProcess1Dlg::OnScaleThreadMsgReceived)
+	ON_MESSAGE(WM_INTERPOLATION, &CImgProcess1Dlg::OnInterpolationThreadMsgReceived)
 	ON_MESSAGE(WM_NOISE, &CImgProcess1Dlg::OnNoiseThreadMsgReceived)
 	ON_MESSAGE(WM_FILTER, &CImgProcess1Dlg::OnFilterThreadMsgReceived)
 END_MESSAGE_MAP()
@@ -537,6 +537,7 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 	// TODO: 在此添加控件通知处理程序代码
 	if (m_pImgSrc == NULL) {
 		printLine(CString("你还没有打开图片。"));
+		return;
 	}
 	else {
 		printLine(CString("正在处理..."));
@@ -554,6 +555,7 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 			}
 			case 1:
 			{
+				m_pageInterpolation.rotate(this);
 				break;
 			}
 			}

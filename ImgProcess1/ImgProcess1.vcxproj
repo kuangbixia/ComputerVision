@@ -201,12 +201,14 @@
     <ClInclude Include="targetver.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="AddNoise.cpp" />
     <ClCompile Include="CBilateralDlg.cpp" />
     <ClCompile Include="CFilterDlg.cpp" />
     <ClCompile Include="CFourierDlg.cpp" />
     <ClCompile Include="CInterpolationDlg.cpp" />
     <ClCompile Include="CNoiseDlg.cpp" />
-    <ClCompile Include="ImageProcess.cpp" />
+    <ClCompile Include="Filter.cpp" />
+    <ClCompile Include="ScaleAndRotate.cpp" />
     <ClCompile Include="ImgProcess1.cpp" />
     <ClCompile Include="ImgProcess1Dlg.cpp" />
     <ClCompile Include="pch.cpp">
