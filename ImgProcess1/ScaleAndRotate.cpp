@@ -114,9 +114,14 @@ UINT ImageProcess::cubicScale(LPVOID p)
 			}
 		}
 
-		// 计算最终像素值
-		/*for (int i = 0; i < 3; ++i)
-			rgb[i] = std::clamp(rgb[i], 0.0, 255.0);*/
+		/*for (int j = 0; j < 3; j++) {
+			if (rgb[j] < 0) {
+				rgb[j] = 0;
+			}
+			else if (rgb[j] > 255) {
+				rgb[j] = 255;
+			}
+		}*/
 
 		if (imgBitCount == 1) {
 			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
@@ -134,10 +139,9 @@ UINT ImageProcess::cubicScale(LPVOID p)
 UINT ImageProcess::cubicRotate(LPVOID p)
 {
 	ThreadParam* param = (ThreadParam*)p;
-	const double sina = sin(param->alpha), cosa = cos(param->alpha);
-	int imgCenter[2] = { param->img->GetWidth() / 2,param->img->GetHeight() / 2 };
-	int srcCenter[2] = { param->src->GetWidth() / 2,param->src->GetHeight() / 2 };
 
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
 	byte* pImgData = (byte*)param->img->GetBits();
 	// 每个像素的字节数
 	int imgBitCount = param->img->GetBPP() / 8;
@@ -152,11 +156,14 @@ UINT ImageProcess::cubicRotate(LPVOID p)
 	// GetPitch()图像的间距
 	int srcPit = param->src->GetPitch();
 
+	const double sina = sin(param->alpha), cosa = cos(param->alpha);
+	int imgCenter[2] = { imgWidth / 2,imgHeight / 2 };
+	int srcCenter[2] = { srcWidth / 2,srcHeight / 2 };
 
 	for (int i = param->startIndex; i < param->endIndex; ++i)
 	{
-		int ix = i % param->img->GetWidth();
-		int iy = i / param->img->GetWidth();
+		int ix = i % imgWidth;
+		int iy = i / imgWidth;
 
 		int xx = ix - imgCenter[0];
 		int yy = iy - imgCenter[1];
@@ -208,6 +215,12 @@ UINT ImageProcess::cubicRotate(LPVOID p)
 			double col3 = cubicHermite(p03[j], p13[j], p23[j], p33[j], x - sx);
 			
 			rgb[j] = cubicHermite(col0, col1, col2, col3, y - sy);
+			/*if (rgb[j] < 0) {
+				rgb[j] = 0;
+			}
+			else if (rgb[j] > 255) {
+				rgb[j] = 255;
+			}*/
 		}
 
 		if (imgBitCount == 1) {

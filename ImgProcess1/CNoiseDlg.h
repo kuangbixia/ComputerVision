@@ -12,8 +12,6 @@ public:
 	virtual ~CNoiseDlg();
 
 	void addNoise(void* p);
-	void addNoise_WIN();
-	void addNoise_OPENMP();
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
@@ -29,4 +27,6 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CComboBox mNoiseType;
+	CEdit mEditMean;
+	CEdit mEditStddev;
 };
