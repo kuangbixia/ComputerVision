@@ -5,12 +5,11 @@
 #include"CFourierDlg.h"
 #include"CNoiseDlg.h"
 #include"CFilterDlg.h"
-#include"CBilateralDlg.h"
 #include"ImageProcess.h"
 
 #pragma once
-#define TABNUM 5
-#define MAX_THREAD 8
+#define TABNUM 4
+#define MAX_THREAD 4
 #define MAX_SPAN 15
 
 struct DrawPara
@@ -62,7 +61,6 @@ protected:
 	CFourierDlg m_pageFourier;
 	CNoiseDlg m_pageNoise;
 	CFilterDlg m_pageFilter;
-	CBilateralDlg m_pageBilateral;
 	
 	CDialog* pPages[TABNUM];
 	

@@ -28,4 +28,6 @@ protected:
 public:
 	CComboBox mFilterType;
 	CEdit mEditStddev;
+	CEdit mEditSigmaD;
+	CEdit mEditSigmaR;
 };

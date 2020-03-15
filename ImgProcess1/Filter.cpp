@@ -415,3 +415,108 @@ UINT ImageProcess::wienerFilter(LPVOID  p) {
 	return 0;
 #undef OFFSET
 }
+
+UINT ImageProcess::bilateralFilter(LPVOID p)
+{
+	ThreadParam* param = (ThreadParam*)p;
+
+	const int r = 1; // 滤波器中心岛边缘的距离
+	const int w_filter = 2 * r + 1; // 滤波器边长
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+	
+	// spatial weight
+	double** d_matrix = new double* [w_filter];
+	for (int q = 0; q < w_filter; q++) {
+		d_matrix[q] = new double[w_filter];
+	}
+	// similarity weight
+	double r_matrix[256];  
+
+	// compute spatial weight
+	for (int i = -r; i <= r; i++)
+		for (int j = -r; j <= r; j++)
+		{
+			int x = j + r;
+			int y = i + r;
+
+			d_matrix[y][x] = exp((i * i + j * j) * (-0.5 / (param->sigma_d * param->sigma_d)));
+		}
+
+	// compute similarity weight
+	for (int i = 0; i < 256; i++)
+	{
+		r_matrix[i] = exp(i * i * (-0.5 / (param->sigma_r * param->sigma_r)));
+	}
+
+	// bilateral filter
+	int startIndex = param->startIndex;
+	int endIndex = param->endIndex;
+	for (int i = startIndex; i <= endIndex; ++i) {
+		int ix = i % imgWidth;
+		int iy = i / imgWidth;
+
+		// 3*3模板
+		if (ix - 1 < 0 || iy - 1 < 0 || ix + 1 > imgWidth - 1 || iy + 1 > imgHeight - 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = *(pSrcData + srcPit * iy + ix * srcBitCount);
+			continue;
+		}
+
+		double weight_sum[3] = {};
+		double pixel_sum[3] = {};
+		int pixel_diff[3] = {};
+
+		for (int m = -r; m <= r; m++) // 行
+		{
+			for (int n = -r; n <= r; n++) // 列
+			{
+				if (m * m + n * n > r* r) continue;
+
+				int x = ix + n;
+				int y = iy + m;
+
+				for (int q = 0; q < 3; q++) {
+					pixel_diff[q] = (int)abs(*(pSrcData + srcPit * iy + ix * srcBitCount + q) - *(pSrcData + srcPit * y + x * srcBitCount + q));
+					// 复合权重
+					double weight_tmp = d_matrix[m + r][n + r] * r_matrix[pixel_diff[q]];
+					pixel_sum[q] += *(pSrcData + srcPit * y + x * srcBitCount) * weight_tmp;
+					weight_sum[q] += weight_tmp;
+				}
+				
+			}
+		}
+		for (int p = 0; p < 3; p++) {
+			pixel_sum[p] = pixel_sum[p] / weight_sum[p];
+			if (pixel_sum[p] < 0) {
+				pixel_sum[p] = 0.0;
+			}
+			else if (pixel_sum[p] > 255) {
+				pixel_sum[p] = 255.0;
+			}
+		}
+		if (imgBitCount == 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)pixel_sum[0];
+		}
+		else {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)pixel_sum[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)pixel_sum[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)pixel_sum[2];
+		}
+	}
+
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
+	return 0;
+}
+

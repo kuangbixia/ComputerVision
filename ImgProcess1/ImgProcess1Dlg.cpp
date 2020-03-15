@@ -79,7 +79,6 @@ void CImgProcess1Dlg::setTab()
 	mTabControl.InsertItem(1, _T("傅里叶变换"));
 	mTabControl.InsertItem(2, _T("噪声"));
 	mTabControl.InsertItem(3, _T("滤波"));
-	mTabControl.InsertItem(4, _T("双边滤波"));
 
 
 	// 把新建对话框添加到tab control
@@ -101,9 +100,6 @@ void CImgProcess1Dlg::setTab()
 	m_pageFilter.Create(IDD_FILTER, &mTabControl);
 	m_pageFilter.MoveWindow(&tabRc);
 	pPages[3] = &m_pageFilter;
-	m_pageBilateral.Create(IDD_BILATERAL, &mTabControl);
-	m_pageBilateral.MoveWindow(&tabRc);
-	pPages[4] = &m_pageBilateral;
 
 	// 初始化tab control显示的窗口
 	for (int i = 0; i < TABNUM; i++) {
@@ -336,6 +332,13 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 					text += "进行维纳滤波。";
 					break;
 				}
+				case 4: // 双边滤波
+				{
+					imageCopy(m_pImgTemp, m_pImgShow);
+
+					text += "进行双边滤波。";
+					break;
+				}
 				}
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
@@ -549,7 +552,7 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 		printLine(CString("正在处理..."));
 
 		this->Invalidate();
-		
+
 		startTime = CTime::GetTickCount();
 		switch (curPage) {
 		case 0:
@@ -565,7 +568,7 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 				break;
 			}
 			}
-			
+
 			break;
 		case 1:
 			break;
@@ -579,8 +582,6 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 			m_pageFilter.filter(this);
 			break;
 		}
-		case 4:
-			break;
 		}
 	}
 }

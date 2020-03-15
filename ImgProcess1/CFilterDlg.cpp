@@ -1,4 +1,4 @@
-ï»¿// CFilterDlg.cpp: å®ç°æ–‡ä»¶
+// CFilterDlg.cpp: ÊµÏÖÎÄ¼ş
 //
 
 #include "pch.h"
@@ -8,7 +8,7 @@
 #include "ImgProcess1Dlg.h"
 
 
-// CFilterDlg å¯¹è¯æ¡†
+// CFilterDlg ¶Ô»°¿ò
 
 IMPLEMENT_DYNAMIC(CFilterDlg, CDialogEx)
 
@@ -27,8 +27,6 @@ void CFilterDlg::filter(void* p)
 	dlg = new CImgProcess1Dlg();
 	dlg = (CImgProcess1Dlg*)p;
 
-	int thread = dlg->mThreadType.GetCurSel();
-
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
 		delete dlg->m_pImgTemp;
@@ -37,14 +35,15 @@ void CFilterDlg::filter(void* p)
 	dlg->m_pImgTemp = new CImage();
 	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
 
+	int thread = dlg->mThreadType.GetCurSel();
 	switch (thread) {
-	case 0: // WINå¤šçº¿ç¨‹
+	case 0: // WIN¶àÏß³Ì
 	{
 		for (int i = 0; i < dlg->m_nThreadNum; ++i)
 		{
-			// windows MFC åˆ›å»ºçº¿ç¨‹
+			// windows MFC ´´½¨Ïß³Ì
 			switch (mFilterType.GetCurSel()) {
-			case 0: // è‡ªé€‚åº”ä¸­å€¼æ»¤æ³¢
+			case 0: // ×ÔÊÊÓ¦ÖĞÖµÂË²¨
 			{
 				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -57,7 +56,7 @@ void CFilterDlg::filter(void* p)
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 1: // åŠ æƒå‡å€¼çº¿æ€§æ»¤æ³¢
+			case 1: // ¼ÓÈ¨¾ùÖµÏßĞÔÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -70,7 +69,7 @@ void CFilterDlg::filter(void* p)
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::meanFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 2: // é«˜æ–¯æ»¤æ³¢
+			case 2: // ¸ßË¹ÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -82,7 +81,7 @@ void CFilterDlg::filter(void* p)
 				CString sText;
 				mEditStddev.GetWindowTextW(sText);
 				if (sText.IsEmpty()) {
-					dlg->printLine(CString("è¿˜æ²¡æœ‰è¾“å…¥æ ‡å‡†å·®ã€‚"));
+					dlg->printLine(CString("»¹Ã»ÓĞÊäÈë±ê×¼²î¡£"));
 					return;
 				}
 				dlg->m_pThreadParam[i].stddev = _ttof(sText);
@@ -90,7 +89,7 @@ void CFilterDlg::filter(void* p)
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 3: // todo:ç»´çº³æ»¤æ³¢
+			case 3: // Î¬ÄÉÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -103,18 +102,41 @@ void CFilterDlg::filter(void* p)
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::wienerFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
+			case 4: // Ë«±ßÂË²¨
+			{
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+				CString dText, rText;
+				mEditSigmaD.GetWindowTextW(dText);
+				mEditSigmaR.GetWindowTextW(rText);
+				if (dText.IsEmpty()||rText.IsEmpty()) {
+					dlg->printLine(CString("»¹Ã»ÓĞÊäÈëÏµÊı¡£"));
+					return;
+				}
+				dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
+				dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
+
+				AfxBeginThread((AFX_THREADPROC)&ImageProcess::bilateralFilter, &dlg->m_pThreadParam[i]);
+				break;
+			}
 			}
 		}
 		break;
 	}
 	case 1: // OpenMP
 	{
-		// æŠŠforå¾ªç¯åˆ†ç»™å„ä¸ªçº¿ç¨‹æ‰§è¡Œï¼ï¼å’Œwindowså¤šçº¿ç¨‹ä¸ä¸€æ ·
-#pragma omp parallel for num_threads(m_nThreadNum)
+		// °ÑforÑ­»··Ö¸ø¸÷¸öÏß³ÌÖ´ĞĞ£¡£¡ºÍwindows¶àÏß³Ì²»Ò»Ñù
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
 		for (int i = 0; i < dlg->m_nThreadNum; ++i)
 		{
 			switch (mFilterType.GetCurSel()) {
-			case 0: // è‡ªé€‚åº”ä¸­å€¼æ»¤æ³¢
+			case 0: // ×ÔÊÊÓ¦ÖĞÖµÂË²¨
 			{
 				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -127,7 +149,7 @@ void CFilterDlg::filter(void* p)
 				ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 1: // åŠ æƒå‡å€¼æ»¤æ³¢
+			case 1: // ¼ÓÈ¨¾ùÖµÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -140,7 +162,7 @@ void CFilterDlg::filter(void* p)
 				ImageProcess::meanFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 2: // é«˜æ–¯æ»¤æ³¢
+			case 2: // ¸ßË¹ÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -152,7 +174,7 @@ void CFilterDlg::filter(void* p)
 				CString sText;
 				mEditStddev.GetWindowTextW(sText);
 				if (sText.IsEmpty()) {
-					dlg->printLine(CString("è¿˜æ²¡æœ‰è¾“å…¥æ ‡å‡†å·®ã€‚"));
+					dlg->printLine(CString("»¹Ã»ÓĞÊäÈë±ê×¼²î¡£"));
 					return;
 				}
 				dlg->m_pThreadParam[i].stddev = _ttof(sText);
@@ -160,7 +182,7 @@ void CFilterDlg::filter(void* p)
 				ImageProcess::gaussianFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 3: // ç»´çº³æ»¤æ³¢
+			case 3: // Î¬ÄÉÂË²¨
 			{
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
@@ -171,6 +193,29 @@ void CFilterDlg::filter(void* p)
 				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
 
 				ImageProcess::wienerFilter(&dlg->m_pThreadParam[i]);
+				break;
+			}
+			case 4: // Ë«±ßÂË²¨
+			{
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+				CString dText, rText;
+				mEditSigmaD.GetWindowTextW(dText);
+				mEditSigmaR.GetWindowTextW(rText);
+				if (dText.IsEmpty() || rText.IsEmpty()) {
+					dlg->printLine(CString("»¹Ã»ÓĞÊäÈëÏµÊı¡£"));
+					return;
+				}
+				dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
+				dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
+
+				ImageProcess::bilateralFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
 			}
@@ -186,15 +231,18 @@ void CFilterDlg::DoDataExchange(CDataExchange* pDX)
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_FILTERTYPE, mFilterType);
 	DDX_Control(pDX, IDC_EDIT_STDDEV, mEditStddev);
+	DDX_Control(pDX, IDC_COMBO_THREAD, mEditSigmaD);
+	DDX_Control(pDX, IDC_EDIT_SIGMAR, mEditSigmaR);
 }
 
 BOOL CFilterDlg::OnInitDialog()
 {
 	CDialog::OnInitDialog();
-	mFilterType.InsertString(0, _T("è‡ªé€‚åº”ä¸­å€¼æ»¤æ³¢"));
-	mFilterType.InsertString(1, _T("åŠ æƒå‡å€¼æ»¤æ³¢"));
-	mFilterType.InsertString(2, _T("é«˜æ–¯æ»¤æ³¢"));
-	mFilterType.InsertString(3, _T("ç»´çº³æ»¤æ³¢"));
+	mFilterType.InsertString(0, _T("×ÔÊÊÓ¦ÖĞÖµÂË²¨"));
+	mFilterType.InsertString(1, _T("¼ÓÈ¨¾ùÖµÂË²¨"));
+	mFilterType.InsertString(2, _T("¸ßË¹ÂË²¨"));
+	mFilterType.InsertString(3, _T("Î¬ÄÉÂË²¨"));
+	mFilterType.InsertString(4, _T("Ë«±ßÂË²¨"));
 	mFilterType.SetCurSel(0);
 	return 0;
 }
@@ -204,4 +252,4 @@ BEGIN_MESSAGE_MAP(CFilterDlg, CDialogEx)
 END_MESSAGE_MAP()
 
 
-// CFilterDlg æ¶ˆæ¯å¤„ç†ç¨‹åº
+// CFilterDlg ÏûÏ¢´¦Àí³ÌĞò

@@ -15,6 +15,9 @@ struct ThreadParam
 	float stddev; // 标准差
 
 	int maxSpan; // 为模板中心到边缘的距离
+
+	float sigma_d;
+	float sigma_r;
 };
 
 static double cubicWeight(double x);
@@ -34,4 +37,5 @@ public:
 	static UINT meanFilter(LPVOID p);
 	static UINT gaussianFilter(LPVOID p);
 	static UINT wienerFilter(LPVOID p);
+	static UINT bilateralFilter(LPVOID p);
 };

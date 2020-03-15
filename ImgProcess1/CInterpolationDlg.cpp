@@ -92,7 +92,7 @@ void CInterpolationDlg::scale(void* p)
 	case 1: // OpenMP
 	{
 		// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
 		for (int i = 0; i < dlg->m_nThreadNum; i++) {
 			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
 			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
@@ -153,7 +153,7 @@ void CInterpolationDlg::rotate(void* p)
 	case 1: // OpenMP
 	{
 		// 把for循环分给各个线程执行！！和windows多线程不一样
-#pragma omp parallel for num_threads(m_nThreadNum)
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
 		for (int i = 0; i < dlg->m_nThreadNum; i++) {
 			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
 			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;

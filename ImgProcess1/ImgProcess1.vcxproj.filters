@@ -45,9 +45,6 @@
     <ClInclude Include="CFilterDlg.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="CBilateralDlg.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="ImageProcess.h">
       <Filter>头文件</Filter>
     </ClInclude>
@@ -71,12 +68,6 @@
     <ClCompile Include="CFourierDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="CFilterDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="CBilateralDlg.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="ScaleAndRotate.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
@@ -84,6 +75,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Filter.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CFilterDlg.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
