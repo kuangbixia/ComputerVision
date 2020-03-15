@@ -27,4 +27,5 @@ protected:
 	DECLARE_MESSAGE_MAP()
 public:
 	CComboBox mFilterType;
+	CEdit mEditStddev;
 };

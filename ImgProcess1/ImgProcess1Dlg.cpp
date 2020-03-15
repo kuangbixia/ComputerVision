@@ -324,6 +324,8 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				}
 				case 2: // todo:高斯滤波
 				{
+					imageCopy(m_pImgTemp, m_pImgShow);
+
 					text += "进行高斯滤波。";
 					break;
 				}

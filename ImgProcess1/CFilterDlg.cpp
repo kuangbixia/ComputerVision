@@ -53,6 +53,7 @@ void CFilterDlg::filter(void* p)
 
 				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
 				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
@@ -65,11 +66,28 @@ void CFilterDlg::filter(void* p)
 
 				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
 				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
 				AfxBeginThread((AFX_THREADPROC)&ImageProcess::meanFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
-			case 2: // todo:高斯滤波
+			case 2: // 高斯滤波
 			{
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+				CString sText;
+				mEditStddev.GetWindowTextW(sText);
+				if (sText.IsEmpty()) {
+					dlg->printLine(CString("还没有输入标准差。"));
+					return;
+				}
+				dlg->m_pThreadParam[i].stddev = _ttof(sText);
+
+				AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianFilter, &dlg->m_pThreadParam[i]);
 				break;
 			}
 			case 3: // todo:维纳滤波
@@ -96,6 +114,7 @@ void CFilterDlg::filter(void* p)
 
 				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
 				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+
 				ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
@@ -108,11 +127,24 @@ void CFilterDlg::filter(void* p)
 
 				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
 				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
 				ImageProcess::meanFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
 			case 2: // todo:高斯滤波
 			{
+				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+				CString sText;
+				mEditStddev.GetWindowTextW(sText);
+				dlg->m_pThreadParam[i].stddev = _ttof(sText);
+
+				ImageProcess::gaussianFilter(&dlg->m_pThreadParam[i]);
 				break;
 			}
 			case 3: // todo:维纳滤波
@@ -131,6 +163,7 @@ void CFilterDlg::DoDataExchange(CDataExchange* pDX)
 {
 	CDialogEx::DoDataExchange(pDX);
 	DDX_Control(pDX, IDC_COMBO_FILTERTYPE, mFilterType);
+	DDX_Control(pDX, IDC_EDIT_STDDEV, mEditStddev);
 }
 
 BOOL CFilterDlg::OnInitDialog()

@@ -177,9 +177,9 @@ UINT ImageProcess::meanFilter(LPVOID  p) {
 		double rgb[3] = {};
 #define ACCUMULATE(_x, _y) { \
 		auto pixel=(byte*)(pSrcData + srcPit * _y + _x * srcBitCount); \
-		rgb[0] += pixel[0]; \
-		rgb[1] += pixel[1]; \
-		rgb[2] += pixel[2]; \
+		rgb[0] += (double)pixel[0]; \
+		rgb[1] += (double)pixel[1]; \
+		rgb[2] += (double)pixel[2]; \
 		}
 		ACCUMULATE(ix - 1, iy - 1); 
 		ACCUMULATE(ix, iy - 1); 
@@ -199,6 +199,101 @@ UINT ImageProcess::meanFilter(LPVOID  p) {
 			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0] / TEMPLATE_SIZE);
 			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)(rgb[1] / TEMPLATE_SIZE);
 			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)(rgb[2] / TEMPLATE_SIZE);
+		}
+	}
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
+	return 0;
+}
+
+static void GetGaussianTemplate(double t[3][3], double stddev)
+{
+	const int center = 1; // [[0, 1, 2], [0, 1, 2], [0, 1, 2]], center is (1, 1)
+	double total = 0;
+	static const double PI = acos(-1);
+	for (int i = 0; i < 3; ++i)
+	{
+		double xsq = pow(i - center, 2.0);
+		for (int j = 0; j < 3; ++j)
+		{
+			double ysq = pow(j - center, 2.0);
+			double f = 1 / (2.0 * PI * stddev);
+			double e = exp(-(xsq + ysq) / (2.0 * stddev * stddev));
+			t[i][j] = f * e;
+			total += t[i][j];
+		}
+	}
+	for (int i = 0; i < 3; ++i)
+		for (int j = 0; j < 3; ++j)
+			t[i][j] /= total;
+}
+
+UINT ImageProcess::gaussianFilter(LPVOID  p) {
+	ThreadParam* param = (ThreadParam*)p;
+	// 3*3模板
+	const int SIZE = 3;
+	double m[SIZE][SIZE];
+	GetGaussianTemplate(m, param->stddev);
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+
+	int startIndex = param->startIndex;
+	int endIndex = param->endIndex;
+
+	// 3*3 模板
+	const int TEMPLATE_SIZE = 3 * 3;
+	for (int i = startIndex; i <= endIndex; ++i) {
+		int ix = i % imgWidth;
+		int iy = i / imgWidth;
+
+		if (ix - 1 < 0 || iy - 1 < 0 || ix + 1 > imgWidth - 1 || iy + 1 > imgHeight - 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = *(pSrcData + srcPit * iy + ix * srcBitCount);
+			continue;
+		}
+
+		double rgb[3] = {};
+#define ACCUMULATE(_x, _y, _a, _b) { \
+		auto _t = (byte*)(pSrcData + srcPit * _y + _x * srcBitCount); \
+		rgb[0] += (double)_t[0]*m[_a][_b]; \
+		rgb[1] += (double)_t[1]*m[_a][_b]; \
+		rgb[2] += (double)_t[2]*m[_a][_b]; \
+		}
+		ACCUMULATE(ix - 1, iy - 1, 0, 0);
+		ACCUMULATE(ix, iy - 1, 1, 0);
+		ACCUMULATE(ix + 1, iy - 1, 2, 0);
+		ACCUMULATE(ix - 1, iy, 0, 1);
+		ACCUMULATE(ix, iy, 1, 1);
+		ACCUMULATE(ix + 1, iy, 2, 1);
+		ACCUMULATE(ix - 1, iy + 1, 0, 2);
+		ACCUMULATE(ix, iy + 1, 1, 2);
+		ACCUMULATE(ix + 1, iy - 1, 2, 2);
+#undef ACCUMULATE
+		for (int j = 0; j < 3; j++) {
+			if (rgb[j] < 0) {
+				rgb[j] = 0.0;
+			}
+			else if (rgb[j] > 255) {
+				rgb[j] = 255.0;
+			}
+		}
+		if (imgBitCount == 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+		}
+		else {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = rgb[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = rgb[2];
 		}
 	}
 	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);

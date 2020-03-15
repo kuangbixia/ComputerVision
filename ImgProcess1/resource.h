@@ -42,9 +42,9 @@
 #define IDC_EDIT_ANGLE                  1034
 #define IDC_STATIC_MEAN                 1035
 #define IDC_EDIT_MEAN                   1036
-#define IDC_EDIT2                       1037
 #define IDC_EDIT_STDDEV                 1037
 #define IDC_STATIC_STDDEV               1038
+#define IDC_EDIT1                       1039
 
 // Next default values for new objects
 // 
@@ -52,7 +52,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NEXT_RESOURCE_VALUE        144
 #define _APS_NEXT_COMMAND_VALUE         32771
-#define _APS_NEXT_CONTROL_VALUE         1039
+#define _APS_NEXT_CONTROL_VALUE         1040
 #define _APS_NEXT_SYMED_VALUE           101
 #endif
 #endif

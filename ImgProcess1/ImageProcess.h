@@ -21,6 +21,7 @@ static double cubicWeight(double x);
 static double cubicHermite(double A, double B, double C, double D, double t);
 static bool GetValue(int p[], int size, int& value);
 static double BoxMullerGenerator(double mean, double stddev);
+static void GetGaussianTemplate(double t[3][3], double stddev);
 
 class ImageProcess
 {
@@ -31,4 +32,5 @@ public:
 	static UINT gaussianNoise(LPVOID p);
 	static UINT medianFilter(LPVOID P);
 	static UINT meanFilter(LPVOID p);
+	static UINT gaussianFilter(LPVOID p);
 };
