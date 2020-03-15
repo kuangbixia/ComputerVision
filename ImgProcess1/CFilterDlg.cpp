@@ -29,6 +29,14 @@ void CFilterDlg::filter(void* p)
 
 	int thread = dlg->mThreadType.GetCurSel();
 
+	if (dlg->m_pImgTemp != NULL) {
+		dlg->m_pImgTemp->Destroy();
+		delete dlg->m_pImgTemp;
+		dlg->m_pImgTemp = NULL;
+	}
+	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
 	switch (thread) {
 	case 0: // WIN多线程
 	{
@@ -50,14 +58,6 @@ void CFilterDlg::filter(void* p)
 			}
 			case 1: // 加权均值线性滤波
 			{
-				if (dlg->m_pImgTemp != NULL) {
-					dlg->m_pImgTemp->Destroy();
-					delete dlg->m_pImgTemp;
-					dlg->m_pImgTemp = NULL;
-				}
-				dlg->m_pImgTemp = new CImage();
-				dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
-
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
 				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
@@ -101,14 +101,6 @@ void CFilterDlg::filter(void* p)
 			}
 			case 1: // 加权均值滤波
 			{
-				if (dlg->m_pImgTemp != NULL) {
-					dlg->m_pImgTemp->Destroy();
-					delete dlg->m_pImgTemp;
-					dlg->m_pImgTemp = NULL;
-				}
-				dlg->m_pImgTemp = new CImage();
-				dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
-
 				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
 				dlg->m_pThreadParam[i].startIndex = i * subLength;
 				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?

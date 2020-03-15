@@ -315,8 +315,10 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 					text += "进行自适应中值滤波。";
 					break;
 				}
-				case 1: // todo:平滑线性滤波
+				case 1: // 加权均值滤波
 				{
+					imageCopy(m_pImgTemp, m_pImgShow);
+
 					text += "进行加权均值滤波。";
 					break;
 				}
