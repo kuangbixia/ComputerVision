@@ -322,15 +322,17 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 					text += "进行加权均值滤波。";
 					break;
 				}
-				case 2: // todo:高斯滤波
+				case 2: // 高斯滤波
 				{
 					imageCopy(m_pImgTemp, m_pImgShow);
 
 					text += "进行高斯滤波。";
 					break;
 				}
-				case 3: // todo:维纳滤波
+				case 3: // 维纳滤波
 				{
+					imageCopy(m_pImgTemp, m_pImgShow);
+
 					text += "进行维纳滤波。";
 					break;
 				}

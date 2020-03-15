@@ -192,13 +192,22 @@ UINT ImageProcess::meanFilter(LPVOID  p) {
 		ACCUMULATE(ix + 1, iy - 1);
 #undef ACCUMULATE
 
+		for (int k = 0; k < 3; k++) {
+			rgb[k] /= TEMPLATE_SIZE;
+			if (rgb[k] < 0) {
+				rgb[k] = 0;
+			}
+			else if (rgb[k] > 255) {
+				rgb[k] = 255;
+			}
+		}
 		if (imgBitCount == 1) {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0] / TEMPLATE_SIZE);
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0]);
 		}
 		else {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0] / TEMPLATE_SIZE);
-			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)(rgb[1] / TEMPLATE_SIZE);
-			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)(rgb[2] / TEMPLATE_SIZE);
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0]);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)(rgb[1]);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)(rgb[2]);
 		}
 	}
 	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
@@ -288,14 +297,121 @@ UINT ImageProcess::gaussianFilter(LPVOID  p) {
 			}
 		}
 		if (imgBitCount == 1) {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
 		}
 		else {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = rgb[1];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = rgb[2];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)rgb[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)rgb[2];
 		}
 	}
 	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
 	return 0;
+}
+
+UINT ImageProcess::wienerFilter(LPVOID  p) {
+#define OFFSET(x, y) (y * imgWidth + x - startIndex)
+	ThreadParam* param = (ThreadParam*)p;
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+
+	int startIndex = param->startIndex;
+	int endIndex = param->endIndex;
+
+	int len = endIndex - startIndex;
+	double noise[3];
+	double* mean[3], * variance[3];
+	for (int ch = 0; ch < 3; ++ch)
+	{
+		mean[ch] = new double[len];
+		variance[ch] = new double[len];
+	}
+	// loop #1: calc mean, var, and noise
+	for (int idx = startIndex; idx < endIndex; ++idx)
+	{
+		int ix = idx % imgWidth;
+		int iy = idx / imgWidth;
+		auto offset = OFFSET(ix, iy);
+		
+		if (ix - 1 < 0 || iy - 1 < 0 || ix + 1 > imgWidth - 1 || iy + 1 > imgHeight - 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = *(pSrcData + srcPit * iy + ix * srcBitCount);
+			continue;
+		}
+
+		byte* pixels[9];
+		for (int i = -1, c = 0; i <= 1; ++i)
+			for (int j = -1; j <= 1; ++j, ++c)
+				pixels[c] = (byte*)(pSrcData + srcPit * (iy + j) + (ix + i) * srcBitCount);
+		for (int ch = 0; ch < 3; ++ch) // RGB channels
+		{
+			mean[ch][offset] = 0.0;
+			variance[ch][offset] = 0.0;
+			for (int i = 0; i < 9; ++i)
+				mean[ch][offset] += pixels[i][ch];
+			mean[ch][offset] /= 9;
+			for (int i = 0; i < 9; ++i)
+				variance[ch][offset] += pow(pixels[i][ch] - mean[ch][offset], 2.0);
+			variance[ch][offset] /= 9;
+			noise[ch] += variance[ch][offset];
+		}
+	}
+	for (int ch = 0; ch < 3; ++ch)
+		noise[ch] /= len;
+	// loop #2: do Wiener filter
+	for (int idx = startIndex; idx < endIndex; ++idx)
+	{
+		int ix = idx % imgWidth;
+		int iy = idx / imgWidth;
+		auto offset = OFFSET(ix, iy);
+		if (ix - 1 < 0 || iy - 1 < 0 || ix + 1 > imgWidth - 1 || iy + 1 > imgHeight - 1) {
+			continue;
+		}
+		double rgb[3];
+		auto pixel = (byte*)(pSrcData + srcPit * (iy) + (ix) * srcBitCount);
+		for (int ch = 0; ch < 3; ++ch)
+		{
+			rgb[ch] = pixel[ch] - mean[ch][offset];
+			double t = variance[ch][offset] - noise[ch];
+			if (t < 0.0)
+				t = 0.0;
+			variance[ch][offset] = fmax(variance[ch][offset], noise[ch]);
+			rgb[ch] = rgb[ch] / variance[ch][offset] * t + mean[ch][offset];
+		}
+		for (int k = 0; k < 3; k++) {
+			if (rgb[k] < 0) {
+				rgb[k] = 0;
+			}
+			else if (rgb[k] > 255) {
+				rgb[k] = 255;
+			}
+		}
+		if (imgBitCount == 1) {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0]);
+		}
+		else {
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)(rgb[0]);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)(rgb[1]);
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)(rgb[2]);
+		}
+	}
+	for (int ch = 0; ch < 3; ++ch)
+	{
+		delete[] mean[ch];
+		delete[] variance[ch];
+	}
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_FILTER, 1, NULL);
+	return 0;
+#undef OFFSET
 }

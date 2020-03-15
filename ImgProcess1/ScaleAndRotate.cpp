@@ -114,22 +114,22 @@ UINT ImageProcess::cubicScale(LPVOID p)
 			}
 		}
 
-		/*for (int j = 0; j < 3; j++) {
+		for (int j = 0; j < 3; j++) {
 			if (rgb[j] < 0) {
 				rgb[j] = 0;
 			}
 			else if (rgb[j] > 255) {
 				rgb[j] = 255;
 			}
-		}*/
+		}
 
 		if (imgBitCount == 1) {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
 		}
 		else {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = rgb[1];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = rgb[2];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)rgb[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)rgb[2];
 		}
 	}
 	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_INTERPOLATION, 1, NULL);
@@ -215,21 +215,21 @@ UINT ImageProcess::cubicRotate(LPVOID p)
 			double col3 = cubicHermite(p03[j], p13[j], p23[j], p33[j], x - sx);
 			
 			rgb[j] = cubicHermite(col0, col1, col2, col3, y - sy);
-			/*if (rgb[j] < 0) {
+			if (rgb[j] < 0) {
 				rgb[j] = 0;
 			}
 			else if (rgb[j] > 255) {
 				rgb[j] = 255;
-			}*/
+			}
 		}
 
 		if (imgBitCount == 1) {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
 		}
 		else {
-			*(pImgData + imgPit * iy + ix * imgBitCount) = rgb[0];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = rgb[1];
-			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = rgb[2];
+			*(pImgData + imgPit * iy + ix * imgBitCount) = (byte)rgb[0];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 1) = (byte)rgb[1];
+			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)rgb[2];
 		}
 	}
 	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_INTERPOLATION, 1, NULL);

@@ -33,4 +33,5 @@ public:
 	static UINT medianFilter(LPVOID P);
 	static UINT meanFilter(LPVOID p);
 	static UINT gaussianFilter(LPVOID p);
+	static UINT wienerFilter(LPVOID p);
 };
