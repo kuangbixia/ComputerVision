@@ -420,7 +420,7 @@ UINT ImageProcess::bilateralFilter(LPVOID p)
 {
 	ThreadParam* param = (ThreadParam*)p;
 
-	const int r = 1; // ÂË²¨Æ÷ÖÐÐÄµº±ßÔµµÄ¾àÀë
+	const int r = 1; // ÂË²¨Æ÷ÖÐÐÄµ½±ßÔµµÄ¾àÀë
 	const int w_filter = 2 * r + 1; // ÂË²¨Æ÷±ß³¤
 
 	int imgWidth = param->img->GetWidth();
@@ -456,10 +456,10 @@ UINT ImageProcess::bilateralFilter(LPVOID p)
 		}
 
 	// compute similarity weight
-	for (int i = 0; i < 256; i++)
-	{
-		r_matrix[i] = exp(i * i * (-0.5 / (param->sigma_r * param->sigma_r)));
-	}
+	//for (int i = 0; i < 256; i++)
+	//{
+	//	r_matrix[i] = exp(i * i * (-0.5 / (param->sigma_r * param->sigma_r)));
+	//}
 
 	// bilateral filter
 	int startIndex = param->startIndex;
@@ -488,22 +488,22 @@ UINT ImageProcess::bilateralFilter(LPVOID p)
 				int y = iy + m;
 
 				for (int q = 0; q < 3; q++) {
-					pixel_diff[q] = (int)abs(*(pSrcData + srcPit * iy + ix * srcBitCount + q) - *(pSrcData + srcPit * y + x * srcBitCount + q));
+					pixel_diff[q] = abs(*(pSrcData + srcPit * iy + ix * srcBitCount + q) - *(pSrcData + srcPit * y + x * srcBitCount + q));
 					// ¸´ºÏÈ¨ÖØ
-					double weight_tmp = d_matrix[m + r][n + r] * r_matrix[pixel_diff[q]];
-					pixel_sum[q] += *(pSrcData + srcPit * y + x * srcBitCount) * weight_tmp;
+					double weight_tmp = d_matrix[m + r][n + r] * exp(-0.5 * pixel_diff[q] * pixel_diff[q] / (param->sigma_r * param->sigma_r));
+					pixel_sum[q] += *(pSrcData + srcPit * y + x * srcBitCount + q) * weight_tmp;
 					weight_sum[q] += weight_tmp;
 				}
 				
 			}
 		}
-		for (int p = 0; p < 3; p++) {
-			pixel_sum[p] = pixel_sum[p] / weight_sum[p];
-			if (pixel_sum[p] < 0) {
-				pixel_sum[p] = 0.0;
+		for (int q = 0; q < 3; q++) {
+			pixel_sum[q] = pixel_sum[q] / weight_sum[q];
+			if (pixel_sum[q] < 0) {
+				pixel_sum[q] = 0.0;
 			}
-			else if (pixel_sum[p] > 255) {
-				pixel_sum[p] = 255.0;
+			else if (pixel_sum[q] > 255) {
+				pixel_sum[q] = 255.0;
 			}
 		}
 		if (imgBitCount == 1) {
