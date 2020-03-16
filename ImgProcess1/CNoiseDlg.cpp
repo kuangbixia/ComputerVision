@@ -7,6 +7,8 @@
 #include "afxdialogex.h"
 #include "ImgProcess1Dlg.h"
 
+#include<omp.h>
+
 
 // CNoiseDlg 对话框
 
@@ -26,6 +28,24 @@ void CNoiseDlg::addNoise(void* p)
 {
 	dlg = new CImgProcess1Dlg();
 	dlg = (CImgProcess1Dlg*)p;
+	switch (mNoiseType.GetCurSel()) {
+	case 0: // 椒盐噪声
+	{
+		saltNoise();
+	}
+	break;
+
+	case 1: // 高斯噪声
+	{
+		gaussianNoise();
+	}
+	break;
+
+	}
+}
+
+void CNoiseDlg::saltNoise()
+{
 	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
 
 	int thread = dlg->mThreadType.GetCurSel();
@@ -39,34 +59,62 @@ void CNoiseDlg::addNoise(void* p)
 			dlg->m_pThreadParam[i].startIndex = i * subLength;
 			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
 				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
-			// windows MFC 创建线程
-			switch (mNoiseType.GetCurSel()) {
-			case 0: // 椒盐噪声
-			{
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::saltNoise, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 1: // 高斯噪声
-			{
-				CString mText, sText;
-				mEditMean.GetWindowTextW(mText);
-				mEditStddev.GetWindowTextW(sText);
-				if (mText.IsEmpty() || sText.IsEmpty()) {
-					dlg->printLine(CString("还没有输入高斯噪声处理参数。"));
-					return;
-				}
-				float mean = _ttof(mText);
-				float stddev = _ttof(sText);
 
-				dlg->m_pThreadParam[i].mean = mean;
-				dlg->m_pThreadParam[i].stddev = stddev;
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianNoise, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			}
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::saltNoise, &dlg->m_pThreadParam[i]);
 		}
-		break;
 	}
+	break;
+
+	case 1: // OpenMP
+	{
+		// 把for循环分给各个线程执行！！和windows多线程不一样
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
+			for (int i = 0; i < dlg->m_nThreadNum; i++) {
+				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+				dlg->m_pThreadParam[i].startIndex = i * subLength;
+				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+					(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+				ImageProcess::saltNoise(&dlg->m_pThreadParam[i]);
+			}
+	}
+	break;
+
+	}
+}
+
+void CNoiseDlg::gaussianNoise()
+{
+	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+	CString mText, sText;
+	mEditMean.GetWindowTextW(mText);
+	mEditStddev.GetWindowTextW(sText);
+	if (mText.IsEmpty() || sText.IsEmpty()) {
+		dlg->printLine(CString("还没有输入高斯噪声处理参数。"));
+		return;
+	}
+	float mean = _ttof(mText);
+	float stddev = _ttof(sText);
+
+	int thread = dlg->mThreadType.GetCurSel();
+
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+			
+			dlg->m_pThreadParam[i].mean = mean;
+			dlg->m_pThreadParam[i].stddev = stddev;
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianNoise, &dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+
 	case 1: // OpenMP
 	{
 		// 把for循环分给各个线程执行！！和windows多线程不一样
@@ -74,27 +122,17 @@ void CNoiseDlg::addNoise(void* p)
 		for (int i = 0; i < dlg->m_nThreadNum; i++) {
 			dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
 			dlg->m_pThreadParam[i].startIndex = i * subLength;
-			if (i != dlg->m_nThreadNum - 1) {
-				dlg->m_pThreadParam[i].endIndex = (i + 1) * subLength - 1;
-			}
-			else {
-				dlg->m_pThreadParam[i].endIndex = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
-			}
-			switch (mNoiseType.GetCurSel()) {
-			case 0: // 椒盐噪声
-			{
-				ImageProcess::saltNoise(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 1: // 高斯噪声
-			{
-				ImageProcess::gaussianNoise(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			}
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].mean = mean;
+			dlg->m_pThreadParam[i].stddev = stddev;
+
+			ImageProcess::gaussianNoise(&dlg->m_pThreadParam[i]);
 		}
-		break;
 	}
+	break;
+
 	}
 }
 

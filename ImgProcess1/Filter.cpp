@@ -175,6 +175,21 @@ UINT ImageProcess::meanFilter(LPVOID  p) {
 		}
 
 		double rgb[3] = {};
+		for (int q = 0; q < 3; q++) {
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix - 1) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix + 1) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy)+ (ix - 1) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy)+ (ix)* srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy)+ (ix + 1) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix - 1) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix) * srcBitCount + q);
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix + 1) * srcBitCount + q);
+			if (srcBitCount == 1) {
+				break;
+			}
+		}
+		/* É÷ÓÃ£¡
 #define ACCUMULATE(_x, _y) { \
 		auto pixel=(byte*)(pSrcData + srcPit * _y + _x * srcBitCount); \
 		rgb[0] += (double)pixel[0]; \
@@ -189,8 +204,8 @@ UINT ImageProcess::meanFilter(LPVOID  p) {
 		ACCUMULATE(ix + 1, iy);
 		ACCUMULATE(ix - 1, iy + 1); 
 		ACCUMULATE(ix, iy + 1); 
-		ACCUMULATE(ix + 1, iy - 1);
-#undef ACCUMULATE
+		ACCUMULATE(ix + 1, iy + 1);
+#undef ACCUMULATE*/
 
 		for (int k = 0; k < 3; k++) {
 			rgb[k] /= TEMPLATE_SIZE;
@@ -260,8 +275,6 @@ UINT ImageProcess::gaussianFilter(LPVOID  p) {
 	int startIndex = param->startIndex;
 	int endIndex = param->endIndex;
 
-	// 3*3 Ä£°å
-	const int TEMPLATE_SIZE = 3 * 3;
 	for (int i = startIndex; i <= endIndex; ++i) {
 		int ix = i % imgWidth;
 		int iy = i / imgWidth;
@@ -272,6 +285,21 @@ UINT ImageProcess::gaussianFilter(LPVOID  p) {
 		}
 
 		double rgb[3] = {};
+		for (int q = 0; q < 3; q++) {
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix - 1) * srcBitCount + q) * m[0][0];
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix)*srcBitCount + q) * m[0][1];
+			rgb[q] += *(pSrcData + srcPit * (iy - 1) + (ix + 1) * srcBitCount + q) * m[0][2];
+			rgb[q] += *(pSrcData + srcPit * (iy)+(ix - 1) * srcBitCount + q) * m[1][0];
+			rgb[q] += *(pSrcData + srcPit * (iy)+(ix)*srcBitCount + q) * m[1][1];
+			rgb[q] += *(pSrcData + srcPit * (iy)+(ix + 1) * srcBitCount + q) * m[1][2];
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix - 1) * srcBitCount + q) * m[2][0];
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix)*srcBitCount + q) * m[2][1];
+			rgb[q] += *(pSrcData + srcPit * (iy + 1) + (ix + 1) * srcBitCount + q) * m[2][2];
+			if (srcBitCount == 1) {
+				break;
+			}
+		}
+		/* É÷ÓÃ£¡
 #define ACCUMULATE(_x, _y, _a, _b) { \
 		auto _t = (byte*)(pSrcData + srcPit * _y + _x * srcBitCount); \
 		rgb[0] += (double)_t[0]*m[_a][_b]; \
@@ -279,15 +307,15 @@ UINT ImageProcess::gaussianFilter(LPVOID  p) {
 		rgb[2] += (double)_t[2]*m[_a][_b]; \
 		}
 		ACCUMULATE(ix - 1, iy - 1, 0, 0);
-		ACCUMULATE(ix, iy - 1, 1, 0);
-		ACCUMULATE(ix + 1, iy - 1, 2, 0);
-		ACCUMULATE(ix - 1, iy, 0, 1);
+		ACCUMULATE(ix, iy - 1, 0, 1);
+		ACCUMULATE(ix + 1, iy - 1, 0, 2);
+		ACCUMULATE(ix - 1, iy, 1, 0);
 		ACCUMULATE(ix, iy, 1, 1);
-		ACCUMULATE(ix + 1, iy, 2, 1);
-		ACCUMULATE(ix - 1, iy + 1, 0, 2);
-		ACCUMULATE(ix, iy + 1, 1, 2);
-		ACCUMULATE(ix + 1, iy - 1, 2, 2);
-#undef ACCUMULATE
+		ACCUMULATE(ix + 1, iy, 1, 2);
+		ACCUMULATE(ix - 1, iy + 1, 2, 0);
+		ACCUMULATE(ix, iy + 1, 2, 1);
+		ACCUMULATE(ix + 1, iy + 1, 2, 2);
+#undef ACCUMULATE*/
 		for (int j = 0; j < 3; j++) {
 			if (rgb[j] < 0) {
 				rgb[j] = 0.0;
@@ -441,9 +469,7 @@ UINT ImageProcess::bilateralFilter(LPVOID p)
 	double** d_matrix = new double* [w_filter];
 	for (int q = 0; q < w_filter; q++) {
 		d_matrix[q] = new double[w_filter];
-	}
-	// similarity weight
-	double r_matrix[256];  
+	}  
 
 	// compute spatial weight
 	for (int i = -r; i <= r; i++)
@@ -454,12 +480,6 @@ UINT ImageProcess::bilateralFilter(LPVOID p)
 
 			d_matrix[y][x] = exp((i * i + j * j) * (-0.5 / (param->sigma_d * param->sigma_d)));
 		}
-
-	// compute similarity weight
-	//for (int i = 0; i < 256; i++)
-	//{
-	//	r_matrix[i] = exp(i * i * (-0.5 / (param->sigma_r * param->sigma_r)));
-	//}
 
 	// bilateral filter
 	int startIndex = param->startIndex;

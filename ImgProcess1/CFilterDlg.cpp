@@ -27,6 +27,86 @@ void CFilterDlg::filter(void* p)
 	dlg = new CImgProcess1Dlg();
 	dlg = (CImgProcess1Dlg*)p;
 
+	switch (mFilterType.GetCurSel()) {
+	case 0: // 自适应中值滤波
+	{
+		medianFilter();
+	}
+	break;
+
+	case 1: // 加权均值滤波
+	{
+		meanFilter();
+	}
+	break;
+
+	case 2: // 高斯滤波
+	{
+		gaussianFilter();
+	}
+	break;
+
+	case 3: // 维纳滤波
+	{
+		wienerFilter();
+	}
+	break;
+
+	case 4: // 双边滤波
+	{
+		bilateralFilter();
+	}
+	break;
+	}
+}
+
+void CFilterDlg::medianFilter()
+{
+	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+
+	int thread = dlg->mThreadType.GetCurSel();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+
+	case 1: // OpenMP
+	{
+		// 把for循环分给各个线程执行！！和windows多线程不一样
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+
+			ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+	}
+
+}
+
+
+void CFilterDlg::meanFilter()
+{
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
 		delete dlg->m_pImgTemp;
@@ -35,193 +115,216 @@ void CFilterDlg::filter(void* p)
 	dlg->m_pImgTemp = new CImage();
 	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
 
+	int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+
 	int thread = dlg->mThreadType.GetCurSel();
 	switch (thread) {
 	case 0: // WIN多线程
 	{
 		for (int i = 0; i < dlg->m_nThreadNum; ++i)
 		{
-			// windows MFC 创建线程
-			switch (mFilterType.GetCurSel()) {
-			case 0: // 自适应中值滤波
-			{
-				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
 
-				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
-				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
 
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::medianFilter, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 1: // 加权均值线性滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::meanFilter, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 2: // 高斯滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-				CString sText;
-				mEditStddev.GetWindowTextW(sText);
-				if (sText.IsEmpty()) {
-					dlg->printLine(CString("还没有输入标准差。"));
-					return;
-				}
-				dlg->m_pThreadParam[i].stddev = _ttof(sText);
-
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianFilter, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 3: // 维纳滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::wienerFilter, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 4: // 双边滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				CString dText, rText;
-				mEditSigmaD.GetWindowTextW(dText);
-				mEditSigmaR.GetWindowTextW(rText);
-				if (dText.IsEmpty()||rText.IsEmpty()) {
-					dlg->printLine(CString("还没有输入系数。"));
-					return;
-				}
-				dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
-				dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
-
-				AfxBeginThread((AFX_THREADPROC)&ImageProcess::bilateralFilter, &dlg->m_pThreadParam[i]);
-				break;
-			}
-			}
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::meanFilter, &dlg->m_pThreadParam[i]);
 		}
-		break;
 	}
+	break;
+
 	case 1: // OpenMP
 	{
 		// 把for循环分给各个线程执行！！和windows多线程不一样
 #pragma omp parallel for num_threads(dlg->m_nThreadNum)
 		for (int i = 0; i < dlg->m_nThreadNum; ++i)
 		{
-			switch (mFilterType.GetCurSel()) {
-			case 0: // 自适应中值滤波
-			{
-				int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
+			int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() - 1;
 
-				dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
-				dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
+			dlg->m_pThreadParam[i].img = dlg->m_pImgShow;
+			dlg->m_pThreadParam[i].maxSpan = MAX_SPAN;
 
-				ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 1: // 加权均值滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				ImageProcess::meanFilter(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 2: // 高斯滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-				CString sText;
-				mEditStddev.GetWindowTextW(sText);
-				if (sText.IsEmpty()) {
-					dlg->printLine(CString("还没有输入标准差。"));
-					return;
-				}
-				dlg->m_pThreadParam[i].stddev = _ttof(sText);
-
-				ImageProcess::gaussianFilter(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 3: // 维纳滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				ImageProcess::wienerFilter(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			case 4: // 双边滤波
-			{
-				int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
-				dlg->m_pThreadParam[i].startIndex = i * subLength;
-				dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
-					(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
-
-				dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
-				dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
-
-				CString dText, rText;
-				mEditSigmaD.GetWindowTextW(dText);
-				mEditSigmaR.GetWindowTextW(rText);
-				if (dText.IsEmpty() || rText.IsEmpty()) {
-					dlg->printLine(CString("还没有输入系数。"));
-					return;
-				}
-				dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
-				dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
-
-				ImageProcess::bilateralFilter(&dlg->m_pThreadParam[i]);
-				break;
-			}
-			}
+			ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
 		}
-		break;
 	}
+	break;
+	}
+}
+
+void CFilterDlg::gaussianFilter()
+{
+	CString sText;
+	mEditStddev.GetWindowTextW(sText);
+	if (sText.IsEmpty()) {
+		dlg->printLine(CString("还没有输入标准差。"));
+		return;
+	}
+
+	if (dlg->m_pImgTemp != NULL) {
+		dlg->m_pImgTemp->Destroy();
+		delete dlg->m_pImgTemp;
+		dlg->m_pImgTemp = NULL;
+	}
+	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+	int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+
+	int thread = dlg->mThreadType.GetCurSel();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			
+			dlg->m_pThreadParam[i].stddev = _ttof(sText);
+
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::gaussianFilter, &dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+
+	case 1: // OpenMP
+	{
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+			
+			dlg->m_pThreadParam[i].stddev = _ttof(sText);
+
+			ImageProcess::gaussianFilter(&dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+	}
+}
+
+void CFilterDlg::wienerFilter()
+{
+	if (dlg->m_pImgTemp != NULL) {
+		dlg->m_pImgTemp->Destroy();
+		delete dlg->m_pImgTemp;
+		dlg->m_pImgTemp = NULL;
+	}
+	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+	int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+
+	int thread = dlg->mThreadType.GetCurSel();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::wienerFilter, &dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+
+	case 1: // OpenMP
+	{
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+			ImageProcess::wienerFilter(&dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+	}
+}
+
+void CFilterDlg::bilateralFilter()
+{
+	CString dText, rText;
+	mEditSigmaD.GetWindowTextW(dText);
+	mEditSigmaR.GetWindowTextW(rText);
+	if (dText.IsEmpty() || rText.IsEmpty()) {
+		dlg->printLine(CString("还没有输入系数。"));
+		return;
+	}
+
+	if (dlg->m_pImgTemp != NULL) {
+		dlg->m_pImgTemp->Destroy();
+		delete dlg->m_pImgTemp;
+		dlg->m_pImgTemp = NULL;
+	}
+	dlg->m_pImgTemp = new CImage();
+	dlg->imageCopy(dlg->m_pImgShow, dlg->m_pImgTemp);
+
+	int subLength = dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() / dlg->m_nThreadNum;
+
+	int thread = dlg->mThreadType.GetCurSel();
+	switch (thread) {
+	case 0: // WIN多线程
+	{
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+			dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
+			dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
+
+			AfxBeginThread((AFX_THREADPROC)&ImageProcess::bilateralFilter, &dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
+
+	case 1: // OpenMP
+	{
+#pragma omp parallel for num_threads(dlg->m_nThreadNum)
+		for (int i = 0; i < dlg->m_nThreadNum; ++i)
+		{
+			dlg->m_pThreadParam[i].startIndex = i * subLength;
+			dlg->m_pThreadParam[i].endIndex = i != dlg->m_nThreadNum - 1 ?
+				(i + 1) * subLength - 1 : dlg->m_pImgTemp->GetWidth() * dlg->m_pImgTemp->GetHeight() - 1;
+
+			dlg->m_pThreadParam[i].img = dlg->m_pImgTemp;
+			dlg->m_pThreadParam[i].src = dlg->m_pImgShow;
+
+			dlg->m_pThreadParam[i].sigma_d = _ttof(dText);
+			dlg->m_pThreadParam[i].sigma_r = _ttof(rText);
+
+			ImageProcess::bilateralFilter(&dlg->m_pThreadParam[i]);
+		}
+	}
+	break;
 	}
 }
 

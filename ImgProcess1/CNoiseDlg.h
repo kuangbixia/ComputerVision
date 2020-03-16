@@ -12,6 +12,8 @@ public:
 	virtual ~CNoiseDlg();
 
 	void addNoise(void* p);
+	void saltNoise();
+	void gaussianNoise();
 
 // 对话框数据
 #ifdef AFX_DESIGN_TIME

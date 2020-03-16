@@ -222,6 +222,10 @@ LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM 
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
+		if (mThreadType.GetCurSel() == 1) {
+			scaleThreadCount = m_nThreadNum - 1;
+		}
+
 		if (m_nThreadNum == ++scaleThreadCount) // 每个线程都处理完
 		{
 			// 为下一次处理初始化
@@ -251,6 +255,10 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
+		if (mThreadType.GetCurSel() == 1) {
+			noiseThreadCount = m_nThreadNum - 1;
+		}
+
 		if (m_nThreadNum == ++noiseThreadCount) // 每个线程都处理完
 		{
 			// 为下一次循环初始化
@@ -288,8 +296,12 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
 	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
 
-	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	if ((int)wParam == 1)
 	{
+		if (mThreadType.GetCurSel() == 1) {
+			filterThreadCount = m_nThreadNum - 1;
+		}
+
 		if (m_nThreadNum == ++filterThreadCount) // 每个线程都处理完
 		{
 			// 为下一次循环初始化
