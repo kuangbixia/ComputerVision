@@ -210,6 +210,7 @@
     <ClCompile Include="CNoiseDlg.cpp" />
     <ClCompile Include="Filter.cpp" />
     <ClCompile Include="CFilterDlg.cpp" />
+    <ClCompile Include="Fourier.cpp" />
     <ClCompile Include="ScaleAndRotate.cpp" />
     <ClCompile Include="ImgProcess1.cpp" />
     <ClCompile Include="ImgProcess1Dlg.cpp" />

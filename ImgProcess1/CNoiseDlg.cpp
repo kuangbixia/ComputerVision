@@ -46,6 +46,7 @@ void CNoiseDlg::addNoise(void* p)
 
 void CNoiseDlg::saltNoise()
 {
+	dlg->printLine(CString("正在进行椒盐噪声处理，噪声系数：0.2 ..."));
 	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
 
 	int thread = dlg->mThreadType.GetCurSel();
@@ -90,9 +91,11 @@ void CNoiseDlg::gaussianNoise()
 	mEditMean.GetWindowTextW(mText);
 	mEditStddev.GetWindowTextW(sText);
 	if (mText.IsEmpty() || sText.IsEmpty()) {
-		dlg->printLine(CString("还没有输入高斯噪声处理参数。"));
+		AfxMessageBox(CString("还没有输入高斯噪声处理参数。"));
 		return;
 	}
+	dlg->printLine(CString("正在进行高斯噪声处理，均值：") + mText + CString("，标准差：") + sText + CString(" ..."));
+
 	float mean = _ttof(mText);
 	float stddev = _ttof(sText);
 

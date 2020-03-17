@@ -62,6 +62,7 @@ void CFilterDlg::filter(void* p)
 
 void CFilterDlg::medianFilter()
 {
+	dlg->printLine(CString("正在进行自适应中值滤波..."));
 	int subLength = dlg->m_pImgShow->GetWidth() * dlg->m_pImgShow->GetHeight() / dlg->m_nThreadNum;
 
 	int thread = dlg->mThreadType.GetCurSel();
@@ -107,6 +108,7 @@ void CFilterDlg::medianFilter()
 
 void CFilterDlg::meanFilter()
 {
+	dlg->printLine(CString("正在进行均值滤波..."));
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
 		delete dlg->m_pImgTemp;
@@ -161,9 +163,10 @@ void CFilterDlg::gaussianFilter()
 	CString sText;
 	mEditStddev.GetWindowTextW(sText);
 	if (sText.IsEmpty()) {
-		dlg->printLine(CString("还没有输入标准差。"));
+		AfxMessageBox(CString("还没有输入标准差。"));
 		return;
 	}
+	dlg->printLine(CString("正在进行高斯滤波，标准差：") + sText + CString(" ..."));
 
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
@@ -218,6 +221,7 @@ void CFilterDlg::gaussianFilter()
 
 void CFilterDlg::wienerFilter()
 {
+	dlg->printLine(CString("正在进行维纳滤波..."));
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
 		delete dlg->m_pImgTemp;
@@ -271,9 +275,10 @@ void CFilterDlg::bilateralFilter()
 	mEditSigmaD.GetWindowTextW(dText);
 	mEditSigmaR.GetWindowTextW(rText);
 	if (dText.IsEmpty() || rText.IsEmpty()) {
-		dlg->printLine(CString("还没有输入系数。"));
+		AfxMessageBox(CString("还没有输入系数。"));
 		return;
 	}
+	dlg->printLine(CString("正在进行双边滤波，sigma_d：") + dText + CString("，sigma_r：") + rText + CString(" ..."));
 
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();

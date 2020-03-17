@@ -75,8 +75,8 @@ void CImgProcess1Dlg::DoDataExchange(CDataExchange* pDX)
 void CImgProcess1Dlg::setTab()
 {
 	// Tab分页
-	mTabControl.InsertItem(0, _T("三次插值"));
-	mTabControl.InsertItem(1, _T("傅里叶变换"));
+	mTabControl.InsertItem(0, _T("缩放与旋转"));
+	mTabControl.InsertItem(1, _T("傅立叶变换"));
 	mTabControl.InsertItem(2, _T("噪声"));
 	mTabControl.InsertItem(3, _T("滤波"));
 
@@ -219,6 +219,9 @@ void CImgProcess1Dlg::imageCopy(CImage* pImgSrc, CImage* pImgDrt)
 LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 {
 	static int scaleThreadCount = 0;
+	static int tempProcessCount = 0;
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
@@ -228,19 +231,83 @@ LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM 
 
 		if (m_nThreadNum == ++scaleThreadCount) // 每个线程都处理完
 		{
-			// 为下一次处理初始化
+			// 为下一次循环初始化
 			scaleThreadCount = 0;
-
 			imageCopy(m_pImgTemp, m_pImgShow);
 
-			CTime endTime = CTime::GetTickCount();
-			CString text(m_pageInterpolation.mScaleOrRotate.GetCurSel() == 0 ? "进行缩放处理。" : "进行旋转处理");
-			text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-			CString timeStr;
-			timeStr.Format(_T("线程：%d个，耗时：%ds。"), m_nThreadNum, (endTime - startTime));
-			text += timeStr;
-			printLine(text);
+			if (++tempProcessCount < circulation) {
+				switch (m_pageInterpolation.mScaleOrRotate.GetCurSel()) {
+				case 0:
+				{
+					m_pageInterpolation.scale(this);
+					break;
+				}
+				case 1:
+				{
+					m_pageInterpolation.rotate(this);
+					break;
+				}
+				}
+			}
+			else {
+				CTime endTime = CTime::GetTickCount();
 
+				// 为下一次处理初始化
+				tempProcessCount = 0;
+				delete[] m_pThreadParam;
+				m_pThreadParam = NULL;
+				m_pThreadParam = new ThreadParam[MAX_THREAD];
+
+				CString text("");
+				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+				CString timeStr;
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+				text += timeStr;
+				printLine(text);
+			}
+		}
+	}
+	return 0;
+}
+
+LRESULT CImgProcess1Dlg::OnFourierThreadMsgReceived(WPARAM wParam, LPARAM lParam)
+{
+	static int fourierThreadCount = 0;
+	static int tempProcessCount = 0;
+	CButton* clb_circulation = ((CButton*)GetDlgItem(IDC_CHECK_CIRCULATION));
+	int circulation = clb_circulation->GetCheck() == 0 ? 1 : 10;
+
+	if ((int)wParam == 1) // 0：发送消息，1：接收消息
+	{
+
+		if (mThreadType.GetCurSel() == 1) {
+			fourierThreadCount = m_nThreadNum - 1;
+		}
+
+		if (m_nThreadNum == ++fourierThreadCount) // 每个线程都处理完
+		{
+			// 为下一次循环初始化
+			fourierThreadCount = 0;
+			imageCopy(m_pImgTemp, m_pImgShow);
+
+			if (++tempProcessCount < circulation)
+				m_pageFourier.fourier(this);
+			else {
+				CTime endTime = CTime::GetTickCount();
+
+				// 为下一次处理初始化
+				tempProcessCount = 0;
+				delete[] m_pThreadParam;
+				m_pThreadParam = NULL;
+				m_pThreadParam = new ThreadParam[MAX_THREAD];
+
+				CString text("");
+				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+				CString timeStr;
+				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+				text += timeStr;
+				printLine(text);
+			}
 		}
 	}
 	return 0;
@@ -277,7 +344,7 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				m_pThreadParam = new ThreadParam[MAX_THREAD];
 
 
-				CString text(m_pageNoise.mNoiseType.GetCurSel() == 0 ? "进行椒盐噪声处理。" : "进行高斯噪声处理。");
+				CString text("");
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
 				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
@@ -317,41 +384,6 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				tempProcessCount = 0;
 
 				CString text("");
-				switch (m_pageFilter.mFilterType.GetCurSel()) {
-				case 0: // 自适应中值滤波
-				{
-					text += "进行自适应中值滤波。";
-					break;
-				}
-				case 1: // 加权均值滤波
-				{
-					imageCopy(m_pImgTemp, m_pImgShow);
-
-					text += "进行加权均值滤波。";
-					break;
-				}
-				case 2: // 高斯滤波
-				{
-					imageCopy(m_pImgTemp, m_pImgShow);
-
-					text += "进行高斯滤波。";
-					break;
-				}
-				case 3: // 维纳滤波
-				{
-					imageCopy(m_pImgTemp, m_pImgShow);
-
-					text += "进行维纳滤波。";
-					break;
-				}
-				case 4: // 双边滤波
-				{
-					imageCopy(m_pImgTemp, m_pImgShow);
-
-					text += "进行双边滤波。";
-					break;
-				}
-				}
 				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
 				CString timeStr;
 				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
@@ -377,6 +409,7 @@ BEGIN_MESSAGE_MAP(CImgProcess1Dlg, CDialogEx)
 	ON_MESSAGE(WM_INTERPOLATION, &CImgProcess1Dlg::OnInterpolationThreadMsgReceived)
 	ON_MESSAGE(WM_NOISE, &CImgProcess1Dlg::OnNoiseThreadMsgReceived)
 	ON_MESSAGE(WM_FILTER, &CImgProcess1Dlg::OnFilterThreadMsgReceived)
+	ON_MESSAGE(WM_FOURIER, &CImgProcess1Dlg::OnFourierThreadMsgReceived)
 END_MESSAGE_MAP()
 
 
@@ -557,12 +590,10 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 {
 	// TODO: 在此添加控件通知处理程序代码
 	if (m_pImgSrc == NULL) {
-		printLine(CString("你还没有打开图片。"));
+		AfxMessageBox(CString("你还没有打开图片。"));
 		return;
 	}
 	else {
-		printLine(CString("正在处理..."));
-
 		this->Invalidate();
 
 		startTime = CTime::GetTickCount();
@@ -583,7 +614,10 @@ void CImgProcess1Dlg::OnBnClickedButtonProcess()
 
 			break;
 		case 1:
+		{
+			m_pageFourier.fourier(this);
 			break;
+		}
 		case 2:
 		{
 			m_pageNoise.addNoise(this);

@@ -49,6 +49,7 @@ public:
 	afx_msg LRESULT OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 	afx_msg LRESULT OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM lParam);
+	afx_msg LRESULT OnFourierThreadMsgReceived(WPARAM wParam, LPARAM lParam);
 
 // 实现
 protected:

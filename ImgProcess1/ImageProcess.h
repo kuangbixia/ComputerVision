@@ -1,5 +1,8 @@
 #pragma once
+
 #define NOISE 0.2
+#define FOURIER_FACTOR 14
+
 struct ThreadParam
 {
 	CImage* img;
@@ -38,4 +41,5 @@ public:
 	static UINT gaussianFilter(LPVOID p);
 	static UINT wienerFilter(LPVOID p);
 	static UINT bilateralFilter(LPVOID p);
+	static UINT fourierTransform(LPVOID p);
 };

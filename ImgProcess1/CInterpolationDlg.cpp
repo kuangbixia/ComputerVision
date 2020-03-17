@@ -49,13 +49,13 @@ void CInterpolationDlg::scale(void* p)
 	mEditXscale.GetWindowTextW(xText);
 	mEditYscale.GetWindowTextW(yText);
 	if (xText.IsEmpty()||yText.IsEmpty()) {
-		dlg->printLine(CString("还没有输入缩放系数。"));
+		AfxMessageBox(CString("还没有输入缩放系数。"));
 		return;
 	}
 	float x = _ttof(xText);
 	float y = _ttof(yText);
 
-
+	dlg->printLine(CString("正在进行缩放变换，x方向：") + xText + CString("，y方向：") + yText + CString(" ..."));
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
 		delete dlg->m_pImgTemp;
@@ -114,11 +114,13 @@ void CInterpolationDlg::rotate(void* p)
 	CString aText;
 	mEditAngle.GetWindowTextW(aText);
 	if (aText.IsEmpty()) {
-		dlg->printLine(CString("还没输入旋转角度。"));
+		AfxMessageBox(CString("还没输入旋转角度。"));
 		return;
 	}
 	float alpha = _ttof(aText);
 	alpha = alpha * acos(-1) / 180; // 转换弧度制
+
+	dlg->printLine(CString("正在进行旋转变换，逆时针旋转 ") + aText + CString("度..."));
 
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
