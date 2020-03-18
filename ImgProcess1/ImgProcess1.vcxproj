@@ -95,9 +95,11 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Disabled</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
+      <AdditionalDependencies>opencl.lib</AdditionalDependencies>
     </Link>
     <Midl>
       <MkTypLibCompatible>false</MkTypLibCompatible>
@@ -119,6 +121,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Custom</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -145,6 +148,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Custom</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -173,6 +177,7 @@
       <PrecompiledHeaderFile>pch.h</PrecompiledHeaderFile>
       <Optimization>Custom</Optimization>
       <OpenMPSupport>true</OpenMPSupport>
+      <DisableSpecificWarnings>4996</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -194,6 +199,7 @@
     <ClInclude Include="CFilterDlg.h" />
     <ClInclude Include="CFourierDlg.h" />
     <ClInclude Include="CInterpolationDlg.h" />
+    <ClInclude Include="CLAgent.h" />
     <ClInclude Include="CNoiseDlg.h" />
     <ClInclude Include="framework.h" />
     <ClInclude Include="ImageProcess.h" />
@@ -207,6 +213,7 @@
     <ClCompile Include="AddNoise.cpp" />
     <ClCompile Include="CFourierDlg.cpp" />
     <ClCompile Include="CInterpolationDlg.cpp" />
+    <ClCompile Include="CLAgent.cpp" />
     <ClCompile Include="CNoiseDlg.cpp" />
     <ClCompile Include="Filter.cpp" />
     <ClCompile Include="CFilterDlg.cpp" />

@@ -80,7 +80,7 @@ int main()
 
 	free(source_str);
 
-	getchar();
+	//getchar();
 	return 0;
 
 }

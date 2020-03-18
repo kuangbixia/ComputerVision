@@ -33,7 +33,9 @@ class ImageProcess
 {
 public:
 	static UINT cubicScale(LPVOID p);
+	static UINT cubicScaleCL(LPVOID p);
 	static UINT cubicRotate(LPVOID p);
+	static UINT cubicRotateCL(LPVOID p);
 	static UINT saltNoise(LPVOID P);
 	static UINT gaussianNoise(LPVOID p);
 	static UINT medianFilter(LPVOID P);
@@ -42,4 +44,9 @@ public:
 	static UINT wienerFilter(LPVOID p);
 	static UINT bilateralFilter(LPVOID p);
 	static UINT fourierTransform(LPVOID p);
+
+	static size_t _RoundUp(size_t group, size_t global) {
+		auto r = global % group;
+		return r == 0 ? global : global + group - r;
+	}
 };

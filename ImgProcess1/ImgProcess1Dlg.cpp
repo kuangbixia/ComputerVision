@@ -225,7 +225,7 @@ LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM 
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
-		if (mThreadType.GetCurSel() == 1) {
+		if (mThreadType.GetCurSel() == 1|| mThreadType.GetCurSel() == 2) {
 			scaleThreadCount = m_nThreadNum - 1;
 		}
 
@@ -259,10 +259,19 @@ LRESULT CImgProcess1Dlg::OnInterpolationThreadMsgReceived(WPARAM wParam, LPARAM 
 				m_pThreadParam = new ThreadParam[MAX_THREAD];
 
 				CString text("");
-				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
-				text += timeStr;
+				if (mThreadType.GetCurSel() == 2) {
+					text += "采用OpenCL。";
+					CString timeStr;
+					timeStr.Format(_T("处理：%d次，耗时：%ds。"), circulation, (endTime - startTime));
+					text += timeStr;
+				}
+				else {
+					text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+					CString timeStr;
+					timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+					text += timeStr;
+				}
+				
 				printLine(text);
 			}
 		}
@@ -302,10 +311,18 @@ LRESULT CImgProcess1Dlg::OnFourierThreadMsgReceived(WPARAM wParam, LPARAM lParam
 				m_pThreadParam = new ThreadParam[MAX_THREAD];
 
 				CString text("");
-				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
-				text += timeStr;
+				if (mThreadType.GetCurSel() == 2) {
+					text += "采用OpenCL。";
+					CString timeStr;
+					timeStr.Format(_T("处理：%d次，耗时：%ds。"), circulation, (endTime - startTime));
+					text += timeStr;
+				}
+				else {
+					text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+					CString timeStr;
+					timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+					text += timeStr;
+				}
 				printLine(text);
 			}
 		}
@@ -345,10 +362,18 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 
 
 				CString text("");
-				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
-				text += timeStr;
+				if (mThreadType.GetCurSel() == 2) {
+					text += "采用OpenCL。";
+					CString timeStr;
+					timeStr.Format(_T("处理：%d次，耗时：%ds。"), circulation, (endTime - startTime));
+					text += timeStr;
+				}
+				else {
+					text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+					CString timeStr;
+					timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+					text += timeStr;
+				}
 				printLine(text);
 			}
 		}
@@ -384,10 +409,18 @@ LRESULT CImgProcess1Dlg::OnFilterThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 				tempProcessCount = 0;
 
 				CString text("");
-				text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
-				CString timeStr;
-				timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
-				text += timeStr;
+				if (mThreadType.GetCurSel() == 2) {
+					text += "采用OpenCL。";
+					CString timeStr;
+					timeStr.Format(_T("处理：%d次，耗时：%ds。"), circulation, (endTime - startTime));
+					text += timeStr;
+				}
+				else {
+					text += mThreadType.GetCurSel() == 0 ? "采用Windows多线程。" : "采用OpenMP。";
+					CString timeStr;
+					timeStr.Format(_T("线程：%d个，处理：%d次，耗时：%ds。"), m_nThreadNum, circulation, (endTime - startTime));
+					text += timeStr;
+				}
 				printLine(text);
 			}
 		}
@@ -453,6 +486,7 @@ BOOL CImgProcess1Dlg::OnInitDialog()
 
 	mThreadType.InsertString(0, _T("Windows多线程"));
 	mThreadType.InsertString(1, _T("OpenMP"));
+	mThreadType.InsertString(2, _T("OpenCL"));
 	mThreadType.SetCurSel(0);
 
 	CSliderCtrl* slider = (CSliderCtrl*)GetDlgItem(IDC_SLIDER);

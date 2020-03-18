@@ -3,6 +3,8 @@
 #include "ImageProcess.h"
 #include <vector>
 #include <algorithm>
+
+#include "CLAgent.h"
 using namespace std;
 
 static double cubicWeight(double x)
@@ -136,6 +138,66 @@ UINT ImageProcess::cubicScale(LPVOID p)
 	return 0;
 }
 
+UINT ImageProcess::cubicScaleCL(LPVOID p)
+{
+	ThreadParam* param = (ThreadParam*)p;
+	// img data
+	//int imgWidth = param->img->GetWidth();
+	//int imgHeight = param->img->GetHeight();
+	int imgWidth = (int)((param->xscale < 1 ? param->xscale : 1) * param->src->GetWidth());
+	int imgHeight = (int)((param->yscale < 1 ? param->yscale : 1) * param->src->GetHeight());
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+	size_t imgMemSize = (-imgPit) * imgHeight * sizeof(byte);
+	byte* imgMemStartAt = pImgData + imgPit * (imgHeight - 1);
+
+	// src data
+	int srcWidth = param->src->GetWidth();
+	int srcHeight = param->src->GetHeight();
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+	size_t srcMemSize = (-srcPit) * srcHeight * sizeof(byte);
+	byte* srcMemStartAt = pSrcData + srcPit * (srcHeight - 1);
+
+	DECLARE_CLA(cla);
+	VERIFY(cla->LoadKernel("Scale"));
+	auto inmem = cla->CreateMemoryBuffer(srcMemSize, srcMemStartAt);
+	VERIFY(inmem != nullptr);
+	auto outmem = cla->CreateMemoryBuffer(imgMemSize, imgMemStartAt);
+	VERIFY(outmem != nullptr);
+	cla->SetKernelArg(0, sizeof(inmem), &inmem);
+	cla->SetKernelArg(1, sizeof(outmem), &outmem);
+	cla->SetKernelArg(2, sizeof(int), &srcWidth);
+	cla->SetKernelArg(3, sizeof(int), &srcHeight);
+	cla->SetKernelArg(4, sizeof(int), &imgWidth);
+	cla->SetKernelArg(5, sizeof(int), &imgHeight);
+	cla->SetKernelArg(6, sizeof(int), &srcPit);
+	cla->SetKernelArg(7, sizeof(int), &imgPit);
+	cla->SetKernelArg(8, sizeof(float), &param->xscale);
+	cla->SetKernelArg(9, sizeof(float), &param->yscale);
+	cla->SetKernelArg(10, sizeof(int), &srcBitCount);
+	constexpr auto WORKDIM = 2;
+	size_t localws[WORKDIM] = { 16, 16 };
+	size_t globalws[WORKDIM] = {
+		_RoundUp(localws[0], imgWidth),
+		_RoundUp(localws[1], imgHeight),
+	};
+	// 真正的开始时间！！
+	//DA->StartTick();
+	VERIFY(cla->RunKernel(WORKDIM, localws, globalws));
+	cla->ReadBuffer(outmem, imgMemSize, imgMemStartAt);
+	cla->Cleanup();
+
+	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_INTERPOLATION, 1, NULL);
+	return 0;
+}
+
 UINT ImageProcess::cubicRotate(LPVOID p)
 {
 	ThreadParam* param = (ThreadParam*)p;
@@ -232,6 +294,61 @@ UINT ImageProcess::cubicRotate(LPVOID p)
 			*(pImgData + imgPit * iy + ix * imgBitCount + 2) = (byte)rgb[2];
 		}
 	}
+	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_INTERPOLATION, 1, NULL);
+	return 0;
+}
+
+UINT ImageProcess::cubicRotateCL(LPVOID p)
+{
+	ThreadParam* param = (ThreadParam*)p;
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+	byte* pImgData = (byte*)param->img->GetBits();
+	// 每个像素的字节数
+	int imgBitCount = param->img->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int imgPit = param->img->GetPitch();
+	size_t imgMemSize = (-imgPit) * imgHeight * sizeof(byte);
+	byte* imgMemStartAt = pImgData + imgPit * (imgHeight - 1);
+
+	int srcWidth = param->src->GetWidth();
+	int srcHeight = param->src->GetHeight();
+	byte* pSrcData = (byte*)param->src->GetBits();
+	// 每个像素的字节数
+	int srcBitCount = param->src->GetBPP() / 8;
+	// GetPitch()图像的间距
+	int srcPit = param->src->GetPitch();
+	size_t srcMemSize = (-srcPit) * srcHeight * sizeof(byte);
+	byte* srcMemStartAt = pSrcData + srcPit * (srcHeight - 1);
+
+	DECLARE_CLA(cla);
+	VERIFY(cla->LoadKernel("Rotate"));
+	auto inmem = cla->CreateMemoryBuffer(srcMemSize, srcMemStartAt);
+	VERIFY(inmem != nullptr);
+	auto outmem = cla->CreateMemoryBuffer(imgMemSize, imgMemStartAt);
+	VERIFY(outmem != nullptr);
+	cla->SetKernelArg(0, sizeof(inmem), &inmem);
+	cla->SetKernelArg(1, sizeof(outmem), &outmem);
+	cla->SetKernelArg(2, sizeof(int), &srcWidth);
+	cla->SetKernelArg(3, sizeof(int), &srcHeight);
+	cla->SetKernelArg(4, sizeof(int), &imgWidth);
+	cla->SetKernelArg(5, sizeof(int), &imgHeight);
+	cla->SetKernelArg(6, sizeof(int), &srcPit);
+	cla->SetKernelArg(7, sizeof(int), &imgPit);
+	cla->SetKernelArg(8, sizeof(double), &param->alpha);
+	cla->SetKernelArg(9, sizeof(int), &srcBitCount);
+	constexpr auto WORKDIM = 2;
+	size_t localws[WORKDIM] = { 16, 16 };
+	size_t globalws[WORKDIM] = {
+		_RoundUp(localws[0], imgWidth),
+		_RoundUp(localws[1], imgHeight),
+	};
+	//DA->StartTick();
+	VERIFY(cla->RunKernel(WORKDIM, localws, globalws));
+	cla->ReadBuffer(outmem, imgMemSize, imgMemStartAt);
+	cla->Cleanup();
+
 	::PostMessageW(AfxGetMainWnd()->GetSafeHwnd(), WM_INTERPOLATION, 1, NULL);
 	return 0;
 }

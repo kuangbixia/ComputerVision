@@ -55,7 +55,6 @@ public:
 protected:
 	HICON m_hIcon;
 	
-	CTime startTime;
 
 	int curPage;
 	CInterpolationDlg m_pageInterpolation;
@@ -72,6 +71,8 @@ protected:
 	afx_msg HCURSOR OnQueryDragIcon();
 	DECLARE_MESSAGE_MAP()
 public:
+	CTime startTime;
+
 	CImage* m_pImgSrc;
 	CImage* m_pImgShow;
 	CImage* m_pImgTemp;

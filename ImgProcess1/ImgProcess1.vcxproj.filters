@@ -48,6 +48,9 @@
     <ClInclude Include="ImageProcess.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="CLAgent.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="ImgProcess1.cpp">
@@ -81,6 +84,9 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="Fourier.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="CLAgent.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
