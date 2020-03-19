@@ -110,7 +110,6 @@ void CInterpolationDlg::scale(void* p)
 		dlg->m_pThreadParam[0].src = dlg->m_pImgShow;
 		dlg->m_pThreadParam[0].xscale = x;
 		dlg->m_pThreadParam[0].yscale = y;
-		dlg->startTime = CTime::GetTickCount();
 		ImageProcess::cubicScaleCL(&dlg->m_pThreadParam[0]);
 		break;
 	}
@@ -181,7 +180,6 @@ void CInterpolationDlg::rotate(void* p)
 		dlg->m_pThreadParam[0].img = dlg->m_pImgTemp;
 		dlg->m_pThreadParam[0].src = dlg->m_pImgShow;
 		dlg->m_pThreadParam[0].alpha = alpha;
-		dlg->startTime = CTime::GetTickCount();
 		ImageProcess::cubicRotateCL(&dlg->m_pThreadParam[0]);
 		break;
 	}

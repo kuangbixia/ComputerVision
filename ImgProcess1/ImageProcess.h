@@ -38,12 +38,15 @@ public:
 	static UINT cubicRotateCL(LPVOID p);
 	static UINT saltNoise(LPVOID P);
 	static UINT gaussianNoise(LPVOID p);
+	static UINT gaussianNoiseCL(LPVOID p);
 	static UINT medianFilter(LPVOID P);
 	static UINT meanFilter(LPVOID p);
 	static UINT gaussianFilter(LPVOID p);
+	static UINT gaussianFilterCL(LPVOID p);
 	static UINT wienerFilter(LPVOID p);
 	static UINT bilateralFilter(LPVOID p);
 	static UINT fourierTransform(LPVOID p);
+	static UINT fourierTransformCL(LPVOID p);
 
 	static size_t _RoundUp(size_t group, size_t global) {
 		auto r = global % group;

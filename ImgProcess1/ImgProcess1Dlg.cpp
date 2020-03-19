@@ -288,8 +288,7 @@ LRESULT CImgProcess1Dlg::OnFourierThreadMsgReceived(WPARAM wParam, LPARAM lParam
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
-
-		if (mThreadType.GetCurSel() == 1) {
+		if (mThreadType.GetCurSel() == 1 || mThreadType.GetCurSel() == 2) {
 			fourierThreadCount = m_nThreadNum - 1;
 		}
 
@@ -339,7 +338,7 @@ LRESULT CImgProcess1Dlg::OnNoiseThreadMsgReceived(WPARAM wParam, LPARAM lParam)
 
 	if ((int)wParam == 1) // 0：发送消息，1：接收消息
 	{
-		if (mThreadType.GetCurSel() == 1) {
+		if (mThreadType.GetCurSel() == 1 || mThreadType.GetCurSel() == 2) {
 			noiseThreadCount = m_nThreadNum - 1;
 		}
 

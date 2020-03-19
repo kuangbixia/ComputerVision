@@ -3,6 +3,7 @@
 #include "ImageProcess.h"
 #include <vector>
 #include <algorithm>
+#include "CLAgent.h"
 using namespace std;
 
 static double BoxMullerGenerator(double mean, double stddev) {
@@ -114,6 +115,59 @@ UINT ImageProcess::gaussianNoise(LPVOID p)
 		}
 	}
 	// ´«µÝÏûÏ¢
+	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_NOISE, 1, NULL);
+	return 0;
+}
+
+UINT ImageProcess::gaussianNoiseCL(LPVOID p)
+{
+	srand(GetCurrentThreadId());
+	ThreadParam* param = (ThreadParam*)p;
+
+	int imgWidth = param->img->GetWidth();
+	int imgHeight = param->img->GetHeight();
+
+	byte* pRealData = (byte*)param->img->GetBits();
+	int bitCount = param->img->GetBPP() / 8;
+	int pit = param->img->GetPitch();
+	size_t imgMemSize = (-pit) * imgHeight * sizeof(byte);
+	byte* imgMemStartAt = pRealData + pit * (imgHeight - 1);
+
+	DECLARE_CLA(cla);
+	VERIFY(cla->LoadKernel("GaussianNoise"));
+	//DA->StartTick();
+	auto imgmem = cla->CreateMemoryBuffer(imgMemSize, imgMemStartAt);
+	VERIFY(imgmem != nullptr);
+	auto length = 3 * (imgWidth * imgHeight);
+	auto random = new int[length];
+	for (int i = 0; i < length; ++i)
+	{
+		int t;
+		do
+			t = rand();
+		while (t == 0);
+		random[i] = t;
+	}
+	auto rndmem = cla->CreateMemoryBuffer(sizeof(int) * length, random);
+	VERIFY(rndmem != nullptr);
+	cla->SetKernelArg(0, sizeof(cl_mem), &imgmem);
+	cla->SetKernelArg(1, sizeof(cl_mem), &rndmem);
+	cla->SetKernelArg(2, sizeof(int), &imgWidth);
+	cla->SetKernelArg(3, sizeof(int), &imgHeight);
+	cla->SetKernelArg(4, sizeof(int), &pit);
+	cla->SetKernelArg(5, sizeof(double), &param->mean);
+	cla->SetKernelArg(6, sizeof(double), &param->stddev);
+	constexpr auto WORKDIM = 2;
+	size_t localws[WORKDIM] = { 16, 16 };
+	size_t globalws[WORKDIM] = {
+		_RoundUp(localws[0], imgWidth),
+		_RoundUp(localws[1], imgHeight),
+	};
+	VERIFY(cla->RunKernel(WORKDIM, localws, globalws));
+	cla->ReadBuffer(imgmem, imgMemSize, imgMemStartAt);
+	cla->Cleanup();
+
+	delete[] random;
 	::PostMessage(AfxGetMainWnd()->GetSafeHwnd(), WM_NOISE, 1, NULL);
 	return 0;
 }

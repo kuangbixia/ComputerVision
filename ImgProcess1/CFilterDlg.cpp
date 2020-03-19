@@ -216,6 +216,8 @@ void CFilterDlg::gaussianFilter()
 		}
 	}
 	break;
+
+
 	}
 }
 

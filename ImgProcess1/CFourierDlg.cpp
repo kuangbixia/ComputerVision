@@ -72,6 +72,14 @@ void CFourierDlg::fourier(void* p)
 		}
 	}
 	break;
+	case 2:
+	{
+		dlg->m_pThreadParam[0].img = dlg->m_pImgTemp;
+		dlg->m_pThreadParam[0].src = dlg->m_pImgShow;
+
+		ImageProcess::fourierTransformCL(&dlg->m_pThreadParam[0]);
+	}
+	break;
 	}
 }
 

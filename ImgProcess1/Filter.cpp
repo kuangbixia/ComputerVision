@@ -337,6 +337,11 @@ UINT ImageProcess::gaussianFilter(LPVOID  p) {
 	return 0;
 }
 
+UINT ImageProcess::gaussianFilterCL(LPVOID p)
+{
+	return 0;
+}
+
 UINT ImageProcess::wienerFilter(LPVOID  p) {
 #define OFFSET(x, y) (y * imgWidth + x - startIndex)
 	ThreadParam* param = (ThreadParam*)p;

@@ -1,18 +1,16 @@
-double BicubicWeight(double x)
+
+double cubicHermite(double A, double B, double C, double D, double t)
 {
-	double a = -0.5;
-	if(x < 0)
-		x = -x;
-	if (x < 1.0)
-		return (a + 2.0)*x*x*x - (a + 3.0)*x*x + 1.0;
-	else if (x < 2.0)
-		return a * x*x*x - 5.0*a * x*x + 8.0*a * x - 4.0 * a;
-	return 0.0;
+	double a = -A / 2.0 + (3.0 * B) / 2.0 - (3.0 * C) / 2.0 + D / 2.0;
+	double b = A - (5.0 * B) / 2.0 + 2.0 * C - D / 2.0;
+	double c = -A / 2.0 + C / 2.0;
+	double d = B;
+	return a * t * t * t + b * t * t + c * t + d;
 }
 #pragma OPENCL EXTENSION cl_amd_printf : enable
 #define SOFF(x, y, ch, bc) ((y) * sp + (x) * bc + ch)
 #define DOFF(x, y, ch, bc) ((y) * dp + (x) * bc + ch)
-__kernel void Rotate(__global uchar *in, __global uchar *out, int sw, int sh, int dw, int dh, int sp, int dp, double angle, int bitcount)
+__kernel void Rotate(__global uchar *in, __global uchar *out, int sw, int sh, int dw, int dh, int sp, int dp, double sina, double cosa, int bitcount)
 {
 	__global uchar *src = in - sp * (sh - 1);
 	__global uchar *dst = out - dp * (dh - 1);
@@ -20,8 +18,6 @@ __kernel void Rotate(__global uchar *in, __global uchar *out, int sw, int sh, in
 	int y = get_global_id(1);
 	if(x >= dw || y >= dh)
 		return;
-	double sina = sin(angle);
-	double cosa = cos(angle);
 	double dcenterx = dw / 2.0, dcentery = dh / 2.0;
 	double scenterx = sw / 2.0, scentery = sh / 2.0;
 	int xx = (int)(x - dcenterx), yy = (int)(y - dcentery);
@@ -40,35 +36,17 @@ __kernel void Rotate(__global uchar *in, __global uchar *out, int sw, int sh, in
 		dst[doffset + 2] = src[soffset + 2];
 		return;
 	}
-	// Calculate W
-	double wx[4], wy[4];
-	wx[0] = BicubicWeight(fx - 1 - sx);
-	wx[1] = BicubicWeight(fx + 0 - sx);
-	wx[2] = BicubicWeight(fx + 1 - sx);
-	wx[3] = BicubicWeight(fx + 2 - sx);
-	wy[0] = BicubicWeight(fy - 1 - sy);
-	wy[1] = BicubicWeight(fy + 0 - sy);
-	wy[2] = BicubicWeight(fy + 1 - sy);
-	wy[3] = BicubicWeight(fy + 2 - sy);
+	
 	for(int ch = 0; ch < 3; ++ch)
 	{
-		double val = 0;
-		val += src[SOFF(fx - 1, fy - 1, ch, bitcount)] * wx[0] * wy[0];
-		val += src[SOFF(fx - 1, fy + 0, ch, bitcount)] * wx[0] * wy[1];
-		val += src[SOFF(fx - 1, fy + 1, ch, bitcount)] * wx[0] * wy[2];
-		val += src[SOFF(fx - 1, fy + 2, ch, bitcount)] * wx[0] * wy[3];
-		val += src[SOFF(fx + 0, fy - 1, ch, bitcount)] * wx[1] * wy[0];
-		val += src[SOFF(fx + 0, fy + 0, ch, bitcount)] * wx[1] * wy[1];
-		val += src[SOFF(fx + 0, fy + 1, ch, bitcount)] * wx[1] * wy[2];
-		val += src[SOFF(fx + 0, fy + 2, ch, bitcount)] * wx[1] * wy[3];
-		val += src[SOFF(fx + 1, fy - 1, ch, bitcount)] * wx[2] * wy[0];
-		val += src[SOFF(fx + 1, fy + 0, ch, bitcount)] * wx[2] * wy[1];
-		val += src[SOFF(fx + 1, fy + 1, ch, bitcount)] * wx[2] * wy[2];
-		val += src[SOFF(fx + 1, fy + 2, ch, bitcount)] * wx[2] * wy[3];
-		val += src[SOFF(fx + 2, fy - 1, ch, bitcount)] * wx[3] * wy[0];
-		val += src[SOFF(fx + 2, fy + 0, ch, bitcount)] * wx[3] * wy[1];
-		val += src[SOFF(fx + 2, fy + 1, ch, bitcount)] * wx[3] * wy[2];
-		val += src[SOFF(fx + 2, fy + 2, ch, bitcount)] * wx[3] * wy[3];
+		
+		double col0=cubicHermite(src[SOFF(fx - 1, fy - 1, ch, bitcount)], src[SOFF(fx + 0, fy - 1, ch, bitcount)], src[SOFF(fx + 1, fy - 1, ch, bitcount)], src[SOFF(fx + 2, fy - 1, ch, bitcount)], sx-fx);
+		double col1=cubicHermite(src[SOFF(fx - 1, fy + 0, ch, bitcount)], src[SOFF(fx + 0, fy + 0, ch, bitcount)], src[SOFF(fx + 1, fy + 0, ch, bitcount)], src[SOFF(fx + 2, fy + 0, ch, bitcount)], sx-fx);
+		double col2=cubicHermite(src[SOFF(fx - 1, fy + 1, ch, bitcount)], src[SOFF(fx + 0, fy + 1, ch, bitcount)], src[SOFF(fx + 1, fy + 1, ch, bitcount)], src[SOFF(fx + 2, fy + 1, ch, bitcount)], sx-fx);
+		double col3=cubicHermite(src[SOFF(fx - 1, fy + 2, ch, bitcount)], src[SOFF(fx + 0, fy + 2, ch, bitcount)], src[SOFF(fx + 1, fy + 2, ch, bitcount)], src[SOFF(fx + 2, fy + 2, ch, bitcount)], sx-fx);
+		
+		double val = cubicHermite(col0, col1, col2, col3, sy - fy);
+
 		if(val > 255.0)
 			val = 255.0;
 		if(val < 0.0)

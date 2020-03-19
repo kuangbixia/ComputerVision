@@ -322,6 +322,8 @@ UINT ImageProcess::cubicRotateCL(LPVOID p)
 	size_t srcMemSize = (-srcPit) * srcHeight * sizeof(byte);
 	byte* srcMemStartAt = pSrcData + srcPit * (srcHeight - 1);
 
+	const double sina = sin(param->alpha), cosa = cos(param->alpha);
+
 	DECLARE_CLA(cla);
 	VERIFY(cla->LoadKernel("Rotate"));
 	auto inmem = cla->CreateMemoryBuffer(srcMemSize, srcMemStartAt);
@@ -336,8 +338,9 @@ UINT ImageProcess::cubicRotateCL(LPVOID p)
 	cla->SetKernelArg(5, sizeof(int), &imgHeight);
 	cla->SetKernelArg(6, sizeof(int), &srcPit);
 	cla->SetKernelArg(7, sizeof(int), &imgPit);
-	cla->SetKernelArg(8, sizeof(double), &param->alpha);
-	cla->SetKernelArg(9, sizeof(int), &srcBitCount);
+	cla->SetKernelArg(8, sizeof(double), &sina);
+	cla->SetKernelArg(9, sizeof(double), &cosa);
+	cla->SetKernelArg(10, sizeof(int), &srcBitCount);
 	constexpr auto WORKDIM = 2;
 	size_t localws[WORKDIM] = { 16, 16 };
 	size_t globalws[WORKDIM] = {
