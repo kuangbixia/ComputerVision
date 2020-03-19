@@ -80,7 +80,11 @@ void CNoiseDlg::saltNoise()
 			}
 	}
 	break;
-
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
+	}
+	break;
 	}
 }
 
@@ -135,14 +139,9 @@ void CNoiseDlg::gaussianNoise()
 		}
 	}
 	break;
-
-	case 2:
+	case 2: // OpenCL
 	{
-		dlg->m_pThreadParam[0].img = dlg->m_pImgShow;
-		dlg->m_pThreadParam[0].mean = mean;
-		dlg->m_pThreadParam[0].stddev = stddev;
-
-		ImageProcess::gaussianNoiseCL(&dlg->m_pThreadParam[0]);
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
 	}
 	break;
 	}

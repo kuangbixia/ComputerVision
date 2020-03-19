@@ -13,14 +13,16 @@ __kernel void Fourier(__global uchar *in, __global uchar *out, int width, int he
 		return;
 	double real = 0.0, imag = 0.0;
 	for(int y = 0; y < height; ++y)
-	for(int x = 0; x < width; ++x)
 	{
-		double gray = 0.299 * src[OFF(x, y, 0, bitcount)] + 0.587 * src[OFF(x, y, 1, bitcount)] + 0.114 * src[OFF(x, y, 2, bitcount)];
-		if((x + y) & 1)
-			gray = -gray;
-		double A = TWOPI * ((double)u * (double)x / (double)width + (double)v * (double)y / (double)height);
-		real += gray * cos(A);
-		imag -= gray * sin(A);
+		for(int x = 0; x < width; ++x)
+		{
+			double gray = 0.299 * src[OFF(x, y, 0, bitcount)] + 0.587 * src[OFF(x, y, 1, bitcount)] + 0.114 * src[OFF(x, y, 2, bitcount)];
+			if((x + y) & 1)
+				gray = -gray;
+			double A = TWOPI * ((double)u * (double)x / (double)width + (double)v * (double)y / (double)height);
+			real += gray * cos(A);
+			imag -= gray * sin(A);
+		}
 	}
 	double mag = sqrt(real * real + imag * imag);
 	mag = FOURIER_FACTOR * log(mag + 1);

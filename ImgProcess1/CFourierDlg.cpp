@@ -27,7 +27,7 @@ void CFourierDlg::fourier(void* p)
 	dlg = new CImgProcess1Dlg();
 	dlg = (CImgProcess1Dlg*)p;
 
-	dlg->printLine(CString("正在进行暴力傅立叶变换..."));
+	dlg->printLine(CString("正在进行暴力傅立叶变换，建议使用小图片..."));
 
 	if (dlg->m_pImgTemp != NULL) {
 		dlg->m_pImgTemp->Destroy();
@@ -72,7 +72,7 @@ void CFourierDlg::fourier(void* p)
 		}
 	}
 	break;
-	case 2:
+	case 2: // OpenCL
 	{
 		dlg->m_pThreadParam[0].img = dlg->m_pImgTemp;
 		dlg->m_pThreadParam[0].src = dlg->m_pImgShow;

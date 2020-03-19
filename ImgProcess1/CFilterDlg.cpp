@@ -101,6 +101,12 @@ void CFilterDlg::medianFilter()
 		}
 	}
 	break;
+
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
+	}
+	break;
 	}
 
 }
@@ -153,6 +159,11 @@ void CFilterDlg::meanFilter()
 
 			ImageProcess::medianFilter(&dlg->m_pThreadParam[i]);
 		}
+	}
+	break;
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
 	}
 	break;
 	}
@@ -216,7 +227,11 @@ void CFilterDlg::gaussianFilter()
 		}
 	}
 	break;
-
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
+	}
+	break;
 
 	}
 }
@@ -266,6 +281,11 @@ void CFilterDlg::wienerFilter()
 
 			ImageProcess::wienerFilter(&dlg->m_pThreadParam[i]);
 		}
+	}
+	break;
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
 	}
 	break;
 	}
@@ -330,6 +350,11 @@ void CFilterDlg::bilateralFilter()
 
 			ImageProcess::bilateralFilter(&dlg->m_pThreadParam[i]);
 		}
+	}
+	break;
+	case 2: // OpenCL
+	{
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
 	}
 	break;
 	}
