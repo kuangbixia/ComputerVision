@@ -82,7 +82,7 @@ void CNoiseDlg::saltNoise()
 	break;
 	case 2: // OpenCL
 	{
-		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式，已提供的有：缩放与旋转和傅立叶变换。"));
 	}
 	break;
 	}
@@ -141,7 +141,7 @@ void CNoiseDlg::gaussianNoise()
 	break;
 	case 2: // OpenCL
 	{
-		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式"));
+		AfxMessageBox(CString("该方法暂不提供OpenCL处理方式，已提供的有：缩放与旋转和傅立叶变换。"));
 	}
 	break;
 	}
