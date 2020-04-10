@@ -320,14 +320,13 @@ void detect_and_draw(IplImage* frame)
     }
 
     cvShowImage("ferns-demo", frame);
+    cvWaitKey();
 }
 
 void CRandomFernsDlg::doFerns()
 {
     string model_image = "model.bmp";
-    string sequence_format = "";
-    string video_file = "mousepad.mp4";
-    source_type frame_source = video_source;
+    string detect_image = "detect.png";
 
     affine_transformation_range range;
 
@@ -368,10 +367,18 @@ void CRandomFernsDlg::doFerns()
         1.0, 1.0, 0.0,
         3, 8);
 
-    CvCapture* capture = 0;
-    IplImage* frame, * gray_frame = 0;
-    int frame_id = 1;
-    char seq_buffer[max_filename];
+    IplImage* frame, * gray_frame = NULL;
+
+    frame = cvLoadImage(detect_image.c_str());
+
+
+    if (gray_frame == NULL)
+        gray_frame = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
+
+    cvCvtColor(frame, gray_frame, CV_RGB2GRAY);
+
+    if (frame->origin != IPL_ORIGIN_TL)
+        cvFlip(gray_frame, gray_frame, 0);
 
     cvNamedWindow("ferns-demo", 1);
     CWnd* pWnd2 = GetDlgItem(IDC_PICTURE);//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
@@ -383,71 +390,15 @@ void CRandomFernsDlg::doFerns()
     ::SetParent(hWndl2, GetDlgItem(IDC_PICTURE)->m_hWnd);
     ::ShowWindow(hParent2, SW_HIDE);
 
-    if (frame_source == webcam_source) {
-        capture = cvCaptureFromCAM(0);
-    }
-    else if (frame_source == video_source) {
-        capture = cvCreateFileCapture(video_file.c_str());
-    }
+    detect_and_draw(gray_frame);
+    cvReleaseImage(&frame);
 
-
-    int64 timer = cvGetTickCount();
-
-    bool stop = false;
-    do {
-        if (frame_source == webcam_source || frame_source == video_source) {
-            if (cvGrabFrame(capture) == 0) break;
-            frame = cvRetrieveFrame(capture);
-        }
-        else {
-            _snprintf(seq_buffer, max_filename, sequence_format.c_str(), frame_id);
-            frame = cvLoadImage(seq_buffer, 1);
-            ++frame_id;
-        }
-
-        if (frame == 0) break;
-
-        if (gray_frame == 0)
-            gray_frame = cvCreateImage(cvSize(frame->width, frame->height), IPL_DEPTH_8U, 1);
-
-        cvCvtColor(frame, gray_frame, CV_RGB2GRAY);
-
-        if (frame->origin != IPL_ORIGIN_TL)
-            cvFlip(gray_frame, gray_frame, 0);
-
-        detect_and_draw(gray_frame);
-
-        int64 now = cvGetTickCount();
-        double fps = 1e6 * cvGetTickFrequency() / double(now - timer);
-        timer = now;
-        clog << "Detection frame rate: " << fps << " fps         \r";
-
-        int key = cvWaitKey(10);
-        if (key >= 0) {
-            switch (char(key)) {
-            case '0': mode = 0; break;
-            case '1': mode = 1; break;
-            case '2': mode = 2; break;
-            case '3': mode = 3; break;
-            case '4': show_tracked_locations = !show_tracked_locations; break;
-            case '5': show_keypoints = !show_keypoints; break;
-            case 'q': stop = true; break;
-            default:;
-            }
-            cout << "mode=" << mode << endl;
-        }
-
-        if (frame_source == sequence_source) {
-            cvReleaseImage(&frame);
-        }
-    } while (!stop);
 
     clog << endl;
     delete detector;
     delete tracker;
 
     cvReleaseImage(&gray_frame);
-    cvReleaseCapture(&capture);
     cvDestroyWindow("ferns-demo");
 }
 
