@@ -12,6 +12,8 @@
 #define new DEBUG_NEW
 #endif
 
+CTime starttime;
+CTime endtime;
 
 // 用于应用程序“关于”菜单项的 CAboutDlg 对话框
 
@@ -112,7 +114,20 @@ BOOL CRandomFernsDlg::OnInitDialog()
     ::SetParent(hWndl1, GetDlgItem(IDC_PICTURE_TRAIN)->m_hWnd);
     ::ShowWindow(hParent1, SW_HIDE);
     cvShowImage("ferns-model", train_image);
+    cvReleaseImage(&train_image);
 
+    IplImage* detect_image = cvLoadImage("./detect.png");
+    cvNamedWindow("ferns-demo", 1);
+    CWnd* pWnd2 = GetDlgItem(IDC_PICTURE);//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
+    CRect rect2;
+    pWnd2->GetClientRect(&rect2);//GetClientRect为获得控件相自身的坐标大小
+    cvResizeWindow("ferns-demo", rect2.Width(), rect2.Height());
+    HWND hWndl2 = (HWND)cvGetWindowHandle("ferns-demo");//hWnd 表示窗口句柄,获取窗口句柄
+    HWND hParent2 = ::GetParent(hWndl2);//GetParent函数一个指定子窗口的父窗口句柄
+    ::SetParent(hWndl2, GetDlgItem(IDC_PICTURE)->m_hWnd);
+    ::ShowWindow(hParent2, SW_HIDE);
+    cvShowImage("ferns-demo", detect_image);
+    cvReleaseImage(&detect_image);
 
 	return TRUE;  // 除非将焦点设置到控件，否则返回 TRUE
 }
@@ -257,8 +272,9 @@ void draw_recognized_keypoints(IplImage* frame, planar_pattern_detector* detecto
 
 void detect_and_draw(IplImage* frame)
 {
+    
     static bool last_frame_ok = false;
-
+    
     if (mode == 1 || ((mode == 0) && last_frame_ok)) {
         bool ok = tracker->track(frame);
         last_frame_ok = ok;
@@ -319,12 +335,20 @@ void detect_and_draw(IplImage* frame)
         }
     }
 
+
     cvShowImage("ferns-demo", frame);
+    endtime = CTime::GetTickCount();
+    CString timeStr;
+    timeStr.Format(_T("耗时：%ds。"), (endtime - starttime));
+    AfxMessageBox(timeStr);
+
     cvWaitKey();
 }
 
 void CRandomFernsDlg::doFerns()
 {
+    starttime = CTime::GetTickCount();
+
     string model_image = "model.bmp";
     string detect_image = "detect.png";
 
@@ -380,17 +404,10 @@ void CRandomFernsDlg::doFerns()
     if (frame->origin != IPL_ORIGIN_TL)
         cvFlip(gray_frame, gray_frame, 0);
 
-    cvNamedWindow("ferns-demo", 1);
-    CWnd* pWnd2 = GetDlgItem(IDC_PICTURE);//CWnd是MFC窗口类的基类,提供了微软基础类库中所有窗口类的基本功能。
-    CRect rect2;
-    pWnd2->GetClientRect(&rect2);//GetClientRect为获得控件相自身的坐标大小
-    cvResizeWindow("ferns-demo", rect2.Width(), rect2.Height());
-    HWND hWndl2 = (HWND)cvGetWindowHandle("ferns-demo");//hWnd 表示窗口句柄,获取窗口句柄
-    HWND hParent2 = ::GetParent(hWndl2);//GetParent函数一个指定子窗口的父窗口句柄
-    ::SetParent(hWndl2, GetDlgItem(IDC_PICTURE)->m_hWnd);
-    ::ShowWindow(hParent2, SW_HIDE);
-
+    
     detect_and_draw(gray_frame);
+    
+
     cvReleaseImage(&frame);
 
 
@@ -407,5 +424,6 @@ void CRandomFernsDlg::OnBnClickedProcess()
 {
     // TODO: 在此添加控件通知处理程序代码
     
+
     doFerns();
 }

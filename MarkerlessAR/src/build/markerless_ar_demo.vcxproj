@@ -1,0 +1,341 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project DefaultTargets="Build" ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <PropertyGroup>
+    <PreferredToolArchitecture>x64</PreferredToolArchitecture>
+  </PropertyGroup>
+  <ItemGroup Label="ProjectConfigurations">
+    <ProjectConfiguration Include="Debug|x64">
+      <Configuration>Debug</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="Release|x64">
+      <Configuration>Release</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="MinSizeRel|x64">
+      <Configuration>MinSizeRel</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+    <ProjectConfiguration Include="RelWithDebInfo|x64">
+      <Configuration>RelWithDebInfo</Configuration>
+      <Platform>x64</Platform>
+    </ProjectConfiguration>
+  </ItemGroup>
+  <PropertyGroup Label="Globals">
+    <ProjectGuid>{E9A3376B-8453-3CDC-81A8-26DC85CCC655}</ProjectGuid>
+    <WindowsTargetPlatformVersion>10.0.18362.0</WindowsTargetPlatformVersion>
+    <Keyword>Win32Proj</Keyword>
+    <Platform>x64</Platform>
+    <ProjectName>markerless_ar_demo</ProjectName>
+    <VCProjectUpgraderObjectName>NoUpgrade</VCProjectUpgraderObjectName>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'" Label="Configuration">
+    <ConfigurationType>Application</ConfigurationType>
+    <CharacterSet>MultiByte</CharacterSet>
+    <PlatformToolset>v142</PlatformToolset>
+  </PropertyGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
+  <ImportGroup Label="ExtensionSettings">
+  </ImportGroup>
+  <ImportGroup Label="PropertySheets">
+    <Import Project="$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props" Condition="exists('$(UserRootDir)\Microsoft.Cpp.$(Platform).user.props')" Label="LocalAppDataPlatform" />
+  </ImportGroup>
+  <PropertyGroup Label="UserMacros" />
+  <PropertyGroup>
+    <_ProjectFileVersion>10.0.20506.1</_ProjectFileVersion>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\exe_\Debug\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">markerless_ar_demo.dir\Debug\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">markerless_ar_demo</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\exe_\Release\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='Release|x64'">markerless_ar_demo.dir\Release\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='Release|x64'">markerless_ar_demo</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='Release|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='Release|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\exe_\MinSizeRel\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">markerless_ar_demo.dir\MinSizeRel\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">markerless_ar_demo</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">true</GenerateManifest>
+    <OutDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\exe_\RelWithDebInfo\</OutDir>
+    <IntDir Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">markerless_ar_demo.dir\RelWithDebInfo\</IntDir>
+    <TargetName Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">markerless_ar_demo</TargetName>
+    <TargetExt Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">.exe</TargetExt>
+    <LinkIncremental Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</LinkIncremental>
+    <GenerateManifest Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">true</GenerateManifest>
+  </PropertyGroup>
+  <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <IncludePath>$(VC_IncludePath);$(WindowsSDK_IncludePath);D:\opencv-2.4.13.6\build\install\include;D:\opencv-2.4.13.6\build\install\include\opencv;D:\opencv-2.4.13.6\build\install\include\opencv2;</IncludePath>
+    <LibraryPath>$(VC_LibraryPath_x64);$(WindowsSDK_LibraryPath_x64);D:\opencv-2.4.13.6\build\install\lib;</LibraryPath>
+  </PropertyGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
+    <ClCompile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <BasicRuntimeChecks>EnableFastChecks</BasicRuntimeChecks>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>Disabled</InlineFunctionExpansion>
+      <Optimization>Disabled</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;CMAKE_INTDIR="Debug";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_DEBUG;_WINDOWS;CMAKE_INTDIR=\"Debug\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>opengl32.lib;opencv_ml2413d.lib;opencv_calib3d2413d.lib;opencv_contrib2413d.lib;opencv_core2413d.lib;opencv_features2d2413d.lib;opencv_flann2413d.lib;opencv_gpu2413d.lib;opencv_highgui2413d.lib;opencv_imgproc2413d.lib;opencv_legacy2413d.lib;opencv_objdetect2413d.lib;opencv_ts2413d.lib;opencv_video2413d.lib;opencv_nonfree2413d.lib;opencv_ocl2413d.lib;opencv_photo2413d.lib;opencv_stitching2413d.lib;opencv_superres2413d.lib;opencv_videostab2413d.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/Debug/markerless_ar_demo.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/Debug/markerless_ar_demo.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
+    <ClCompile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>AnySuitable</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="Release";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"Release\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/Release/markerless_ar_demo.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/Release/markerless_ar_demo.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">
+    <ClCompile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MinSpace</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="MinSizeRel";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+      <DebugInformationFormat>
+      </DebugInformationFormat>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"MinSizeRel\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>false</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/MinSizeRel/markerless_ar_demo.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/MinSizeRel/markerless_ar_demo.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">
+    <ClCompile>
+      <AssemblerListingLocation>$(IntDir)</AssemblerListingLocation>
+      <CompileAs>CompileAsCpp</CompileAs>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
+      <ExceptionHandling>Sync</ExceptionHandling>
+      <InlineFunctionExpansion>OnlyExplicitInline</InlineFunctionExpansion>
+      <Optimization>MaxSpeed</Optimization>
+      <PrecompiledHeader>NotUsing</PrecompiledHeader>
+      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeTypeInfo>true</RuntimeTypeInfo>
+      <UseFullPaths>false</UseFullPaths>
+      <WarningLevel>Level3</WarningLevel>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR="RelWithDebInfo";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+      <ObjectFileName>$(IntDir)</ObjectFileName>
+    </ClCompile>
+    <ResourceCompile>
+      <PreprocessorDefinitions>WIN32;_WINDOWS;NDEBUG;CMAKE_INTDIR=\"RelWithDebInfo\";%(PreprocessorDefinitions)</PreprocessorDefinitions>
+    </ResourceCompile>
+    <Midl>
+      <AdditionalIncludeDirectories>%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <OutputDirectory>$(ProjectDir)/$(IntDir)</OutputDirectory>
+      <HeaderFileName>%(Filename).h</HeaderFileName>
+      <TypeLibraryName>%(Filename).tlb</TypeLibraryName>
+      <InterfaceIdentifierFileName>%(Filename)_i.c</InterfaceIdentifierFileName>
+      <ProxyFileName>%(Filename)_p.c</ProxyFileName>
+    </Midl>
+    <Link>
+      <AdditionalDependencies>kernel32.lib;user32.lib;gdi32.lib;winspool.lib;shell32.lib;ole32.lib;oleaut32.lib;uuid.lib;comdlg32.lib;advapi32.lib</AdditionalDependencies>
+      <AdditionalLibraryDirectories>%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalOptions>%(AdditionalOptions) /machine:x64</AdditionalOptions>
+      <GenerateDebugInformation>true</GenerateDebugInformation>
+      <IgnoreSpecificDefaultLibraries>%(IgnoreSpecificDefaultLibraries)</IgnoreSpecificDefaultLibraries>
+      <ImportLibrary>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/RelWithDebInfo/markerless_ar_demo.lib</ImportLibrary>
+      <ProgramDataBaseFile>D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/exe_/RelWithDebInfo/markerless_ar_demo.pdb</ProgramDataBaseFile>
+      <SubSystem>Console</SubSystem>
+    </Link>
+    <ProjectReference>
+      <LinkLibraryDependencies>false</LinkLibraryDependencies>
+    </ProjectReference>
+  </ItemDefinitionGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CMakeLists.txt">
+      <Message Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Building Custom Rule D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">setlocal
+D:\CMake\bin\cmake.exe -SD:/vsPro/Repos/ComputerVision/MarkerlessAR/src -BD:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build --check-stamp-file D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Building Custom Rule D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='Release|x64'">setlocal
+D:\CMake\bin\cmake.exe -SD:/vsPro/Repos/ComputerVision/MarkerlessAR/src -BD:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build --check-stamp-file D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='Release|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='Release|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">Building Custom Rule D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">setlocal
+D:\CMake\bin\cmake.exe -SD:/vsPro/Repos/ComputerVision/MarkerlessAR/src -BD:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build --check-stamp-file D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='MinSizeRel|x64'">false</LinkObjects>
+      <Message Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">Building Custom Rule D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/CMakeLists.txt</Message>
+      <Command Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">setlocal
+D:\CMake\bin\cmake.exe -SD:/vsPro/Repos/ComputerVision/MarkerlessAR/src -BD:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build --check-stamp-file D:/vsPro/Repos/ComputerVision/MarkerlessAR/src/build/CMakeFiles/generate.stamp
+if %errorlevel% neq 0 goto :cmEnd
+:cmEnd
+endlocal &amp; call :cmErrorLevel %errorlevel% &amp; goto :cmDone
+:cmErrorLevel
+exit /b %1
+:cmDone
+if %errorlevel% neq 0 goto :VCEnd</Command>
+      <AdditionalInputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\CMake\share\cmake-3.17\Modules\CMakeCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCXXInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeCommonLanguageInclude.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeGenericSystem.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeInitializeConfigs.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeLanguageInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeRCInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInformation.cmake;D:\CMake\share\cmake-3.17\Modules\CMakeSystemSpecificInitialize.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\CMakeCommonCompilerMacros.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Compiler\MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-C.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC-CXX.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows-MSVC.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\Windows.cmake;D:\CMake\share\cmake-3.17\Modules\Platform\WindowsPaths.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeCXXCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeRCCompiler.cmake;D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\3.17.2\CMakeSystem.cmake;%(AdditionalInputs)</AdditionalInputs>
+      <Outputs Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\generate.stamp</Outputs>
+      <LinkObjects Condition="'$(Configuration)|$(Platform)'=='RelWithDebInfo|x64'">false</LinkObjects>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARDrawingContext.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARDrawingContext.hpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CameraCalibration.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CameraCalibration.hpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\GeometryTypes.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\GeometryTypes.hpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\main.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARPipeline.hpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARPipeline.cpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\Pattern.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\Pattern.hpp" />
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\PatternDetector.cpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\PatternDetector.hpp" />
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\DebugHelpers.hpp" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\ZERO_CHECK.vcxproj">
+      <Project>{F5FC4A97-D3F1-3DBA-867D-322687A411BE}</Project>
+      <Name>ZERO_CHECK</Name>
+      <ReferenceOutputAssembly>false</ReferenceOutputAssembly>
+      <CopyToOutputDirectory>Never</CopyToOutputDirectory>
+    </ProjectReference>
+  </ItemGroup>
+  <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
+  <ImportGroup Label="ExtensionTargets">
+  </ImportGroup>
+</Project>

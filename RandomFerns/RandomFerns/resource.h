@@ -10,6 +10,7 @@
 #define IDC_PROCESS                     1000
 #define IDC_PICTURE                     1001
 #define IDC_BUTTON1                     1002
+#define IDC_OPEN_MODEL                  1002
 #define IDC_PICTURE_TRAIN               1003
 
 // Next default values for new objects

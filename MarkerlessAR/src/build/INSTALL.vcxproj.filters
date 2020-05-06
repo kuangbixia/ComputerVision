@@ -1,0 +1,13 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <CustomBuild Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\build\CMakeFiles\6b71392b0ebea4a5536d9844e2412fc5\INSTALL_force.rule">
+      <Filter>CMake Rules</Filter>
+    </CustomBuild>
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="CMake Rules">
+      <UniqueIdentifier>{A28E3D91-A88B-3A99-844A-60C447C56103}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>

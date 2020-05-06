@@ -1,0 +1,2 @@
+1.cmake支持OpenGL的Opencv时，对install生成，而不是all_build，不然找不到include和lib
+2.编译demo时，除了配置opencv的环境，库文件还要加上opencv32.lib

@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="16.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <ItemGroup>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARDrawingContext.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CameraCalibration.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\GeometryTypes.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARPipeline.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\Pattern.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\PatternDetector.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARDrawingContext.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CameraCalibration.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\GeometryTypes.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\ARPipeline.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\Pattern.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\PatternDetector.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\DebugHelpers.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <CustomBuild Include="D:\vsPro\Repos\ComputerVision\MarkerlessAR\src\CMakeLists.txt" />
+  </ItemGroup>
+  <ItemGroup>
+    <Filter Include="Header Files">
+      <UniqueIdentifier>{6630FB7E-0BE0-321D-8F4F-82DD24607CB5}</UniqueIdentifier>
+    </Filter>
+    <Filter Include="Source Files">
+      <UniqueIdentifier>{3136C38D-E29E-3192-A437-AA6A0BFB3E49}</UniqueIdentifier>
+    </Filter>
+  </ItemGroup>
+</Project>
